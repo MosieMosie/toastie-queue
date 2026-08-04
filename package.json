@@ -1,0 +1,39 @@
+{
+  "name": "tosti-wachtrij",
+  "version": "0.0.0",
+  "description": "Whose toastie is this? A queue for the shared toastie iron at work.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=24"
+  },
+  "packageManager": "pnpm@11.5.1",
+  "scripts": {
+    "start": "vite",
+    "dev": "vite",
+    "build": "vite build",
+    "serve": "node server/index.ts"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.4",
+    "@stylistic/eslint-plugin": "5.10.0",
+    "@tailwindcss/vite": "4.1.13",
+    "@types/node": "26.1.2",
+    "eslint": "9.39.4",
+    "eslint-import-resolver-typescript": "4.4.4",
+    "eslint-plugin-import-x": "4.16.2",
+    "eslint-plugin-react": "7.37.5",
+    "eslint-plugin-solid": "0.14.5",
+    "globals": "17.4.0",
+    "prettier": "3.8.1",
+    "solid-devtools": "0.34.3",
+    "tailwindcss": "4.1.13",
+    "typescript": "5.9.2",
+    "typescript-eslint": "8.57.1",
+    "vite": "7.1.10",
+    "vite-plugin-solid": "2.11.9"
+  },
+  "dependencies": {
+    "solid-js": "1.9.9"
+  }
+}

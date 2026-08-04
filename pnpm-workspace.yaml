@@ -1,0 +1,7 @@
+# pnpm 10+ refuses to run postinstall scripts until they are approved here.
+# All of these fetch/link a native binary at install time.
+allowBuilds:
+  "@tailwindcss/oxide": true
+  esbuild: true
+  # import resolver used by eslint-plugin-import-x
+  unrs-resolver: true

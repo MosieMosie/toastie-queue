@@ -1,0 +1,18 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+
+# local SQLite database
+data/
+
+# environment
+.env
+.env*.local
+
+# editors & OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
