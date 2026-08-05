@@ -1,12 +1,15 @@
 import {For} from "solid-js";
 
-import {draggable, dropZone} from "../lib/dnd";
-import {toast} from "../lib/toast";
+import {draggable, dropZone} from "../effects/dnd";
+import {toast} from "../effects/toast";
 import {t} from "../store/i18n";
 import {cancel, drop, freeSlot, state} from "../store/store";
 import {colorOf} from "../store/tosti";
 
 import {TostiSvg} from "./TostiSvg";
+
+const card =
+  "flex min-h-[5.5rem] w-[6.75rem] flex-none flex-col items-center justify-center rounded-2xl p-2 transition";
 
 function QueueCard(props: {id: string; person: string; index: number}) {
   const zone = dropZone(() => ({kind: "queue", index: props.index}));
@@ -30,7 +33,7 @@ function QueueCard(props: {id: string; person: string; index: number}) {
         label: () => props.person,
         onTap: toIron,
       })}
-      class="pop-in relative flex min-h-[5.5rem] w-[6.75rem] flex-none touch-none flex-col items-center justify-center gap-1 rounded-2xl bg-white p-2 shadow-md ring-1 ring-amber-900/10 transition select-none active:scale-95"
+      class={`${card} pop-in relative touch-none gap-1 bg-white shadow-md ring-1 ring-amber-900/10 select-none active:scale-95`}
       classList={{"ring-4 ring-lime-400 scale-[1.03]": zone.over()}}
       title={t("queue.cardTitle", {name: props.person})}
     >
@@ -68,7 +71,7 @@ function EmptySlot(props: {index: number}) {
   return (
     <div
       data-drop={zone.key()}
-      class="flex min-h-[5.5rem] w-[6.75rem] flex-none flex-col items-center justify-center gap-0.5 rounded-2xl border-2 border-dashed p-2 transition"
+      class={`${card} gap-0.5 border-2 border-dashed`}
       classList={{
         "border-amber-900/15 text-amber-900/25": !zone.active(),
         "border-lime-500 bg-lime-50 text-lime-700 scale-[1.03]": zone.over(),

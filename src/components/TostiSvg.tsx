@@ -19,15 +19,11 @@ function mix(a: string, b: string, t: number) {
 interface Props {
   /** 0 = raw dough-pale, 1 = perfectly golden, 2 = charcoal */
   doneness?: number;
-  /** which expression to wear, or false for a blank sandwich. See faceFor(). */
+  /** false = blank sandwich */
   face?: FaceKind | false;
   class?: string;
 }
 
-/**
- * A triangle-cut tosti. Bread and grill marks darken with `doneness`,
- * so a slot at a glance tells you how far along a sandwich is.
- */
 export function TostiSvg(props: Props) {
   const id = `tosti${uid++}`;
   const done = () => Math.max(0, Math.min(2, props.doneness ?? 0.85));

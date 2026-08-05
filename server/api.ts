@@ -67,7 +67,6 @@ function loadState(): State {
   }
 }
 
-/** shared name/color rules for POST and PATCH; returns an error code or null */
 function validatePerson(
   name: string,
   color: string,
@@ -93,7 +92,6 @@ interface Client {
 }
 const clients = new Set<Client>();
 
-/** data must already be JSON-serialized */
 function broadcast(event: string, data: string, exceptClientId?: string) {
   const frame = `event: ${event}\ndata: ${data}\n\n`;
   for (const c of clients) {
@@ -195,7 +193,6 @@ async function route(req: IncomingMessage, res: ServerResponse, url: URL) {
     }
     stmt.updatePerson.run(name, color, oldName);
     if (name !== oldName) {
-      // carry the person's tostis and eaten tally over to the new name
       const state = loadState();
       renamePersonInState(state, oldName, name);
       const payload = JSON.stringify(state);
@@ -216,7 +213,6 @@ async function route(req: IncomingMessage, res: ServerResponse, url: URL) {
   json(res, 404, {error: "not-found"});
 }
 
-/** Handle an /api request; returns false untouched for anything else. */
 export function handleApi(req: IncomingMessage, res: ServerResponse): boolean {
   if (!req.url?.startsWith("/api/")) {
     return false;

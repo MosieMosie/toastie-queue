@@ -4,7 +4,7 @@ import {render} from "solid-js/web";
 import "solid-devtools";
 
 import App from "./App";
-import "./lib/alarm";
+import "./effects/alarm";
 
 const root = document.getElementById("root");
 

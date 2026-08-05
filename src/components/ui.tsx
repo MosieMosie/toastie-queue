@@ -2,13 +2,11 @@ import {JSX, Show} from "solid-js";
 
 import {t} from "../store/i18n";
 
-/** the standard pill buttons used in the header and the modals */
 const btn =
-  "h-10 rounded-full px-4 text-sm font-bold shadow-sm transition active:scale-95";
+  "h-10 rounded-full px-3 text-xs font-bold shadow-sm transition active:scale-95 sm:px-4 sm:text-sm";
 export const btnPrimary = `${btn} bg-amber-900 text-amber-50 disabled:opacity-30`;
 export const btnSecondary = `${btn} bg-white text-amber-900/70 ring-1 ring-amber-900/10`;
 
-/** the colored initial circle used on chips, list rows and the scoreboard */
 export function Avatar(props: {name: string; color: string}) {
   return (
     <span
@@ -20,7 +18,6 @@ export function Avatar(props: {name: string; color: string}) {
   );
 }
 
-/** centered dialog with title + close button; closes on backdrop tap too */
 export function Modal(props: {
   open: boolean;
   onClose: () => void;
@@ -30,14 +27,14 @@ export function Modal(props: {
   return (
     <Show when={props.open}>
       <div
-        class="fixed inset-0 z-50 flex items-center justify-center bg-amber-950/50 p-6"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-amber-950/50 p-3 sm:p-6"
         onClick={() => props.onClose()}
       >
         <div
           role="dialog"
           aria-modal="true"
           aria-label={props.title}
-          class="pop-in flex max-h-[90vh] w-full max-w-md flex-col rounded-3xl bg-white p-5 shadow-2xl"
+          class="pop-in flex max-h-[90dvh] w-full max-w-md flex-col rounded-3xl bg-white p-4 shadow-2xl sm:p-5"
           onClick={(e) => e.stopPropagation()}
         >
           <div class="mb-3 flex items-center justify-between">

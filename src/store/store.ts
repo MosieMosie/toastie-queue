@@ -91,7 +91,6 @@ async function personRequest(
   }
 }
 
-/** returns an error code for i18n, or null on success */
 export const addPerson = (name: string, color: string) =>
   personRequest("/api/people", "POST", {name, color});
 
@@ -182,7 +181,6 @@ export function drop(ref: DragRef, target: DropTarget) {
           const moving = s.queue[i];
           const occupant = s.iron[slot];
           if (occupant) {
-            // straight swap: the tosti on the iron takes the queue spot
             s.queue[i] = {...occupant, placedAt: null};
           } else {
             s.queue.splice(i, 1);

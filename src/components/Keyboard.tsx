@@ -1,18 +1,16 @@
 import {For, Show} from "solid-js";
 
 // a touchscreen kiosk has no OS keyboard, so forms bring this one instead;
-// also drives inputmode="none" so a phone's native keyboard doesn't fight it
+// also drives inputmode="none" so the kiosk never pops a native keyboard.
+// The min-width keeps phones/tablets out: they have an OS keyboard, which
+// beats this one (capitals, autocorrect, the works).
 export const TOUCH_ONLY = window.matchMedia(
-  "(any-pointer: coarse) and (not (any-pointer: fine))",
+  "(any-pointer: coarse) and (not (any-pointer: fine)) and (min-width: 64rem)",
 ).matches;
 
 const ROWS = ["qwertyuiop", "asdfghjkl", "zxcvbnm"];
 
-/**
- * In-app keyboard for touchscreens that have no OS keyboard (the kitchen
- * kiosk). Keys act on pointerdown with preventDefault so they never steal
- * focus from the input.
- */
+/** keys act on pointerdown with preventDefault so they never steal focus from the input */
 export function Keyboard(props: {
   onKey: (ch: string) => void;
   onBackspace: () => void;

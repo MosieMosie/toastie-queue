@@ -1,6 +1,9 @@
 import {createSignal} from "solid-js";
 
+import {t} from "../store/i18n";
 import {canDrop, DragRef, drop, DropTarget} from "../store/store";
+
+import {toast} from "./toast";
 
 const DRAG_THRESHOLD = 8;
 
@@ -90,8 +93,13 @@ export function draggable(opts: {
       } else {
         const target = targetAt(ev.clientX, ev.clientY);
         const ref = dragging();
-        if (target && ref && canDrop(ref, target)) {
-          drop(ref, target);
+        if (target && ref && canDrop(ref, target) && drop(ref, target)) {
+          const name = dragLabel();
+          if (target.kind === "plate") {
+            toast(t("toast.enjoy", {name}));
+          } else if (target.kind === "iron" && ref.from !== "iron") {
+            toast(t("toast.onIron", {name}));
+          }
         }
       }
       reset();
@@ -120,10 +128,6 @@ export function draggable(opts: {
   };
 }
 
-/**
- * A place a tosti can land. `key` goes on the element as `data-drop` so the
- * pointer hit-test can find it; `over` and `active` drive the highlighting.
- */
 export function dropZone(target: () => DropTarget) {
   const key = () => keyOf(target());
   return {

@@ -16,7 +16,7 @@ export interface State {
   iron: (Tosti | null)[];
   queue: Tosti[];
   served: number;
-  /** all-time tostis eaten per person; feeds the future scoreboard */
+  /** all-time tostis eaten per person */
   eaten: Record<string, number>;
 }
 
@@ -30,7 +30,6 @@ export const emptyState = (): State => ({
   eaten: {},
 });
 
-/** move every name-keyed reference in the state over to a new name */
 export function renamePersonInState(
   state: State,
   oldName: string,
@@ -72,7 +71,6 @@ function sanitizeEaten(value: unknown): Record<string, number> {
   return eaten;
 }
 
-/** coerce arbitrary JSON into the State shape, or null if it is nothing like one */
 export function sanitizeState(value: unknown): State | null {
   if (!value || typeof value !== "object") {
     return null;
