@@ -5,8 +5,7 @@ import {colorOf} from "../store/tosti";
 
 import {TostiSvg} from "./TostiSvg";
 
-/** the tosti that follows the finger while dragging */
-export function DragGhost() {
+export function ToastiDragGhost() {
   return (
     <Show when={dragging() && dragPos()}>
       <div

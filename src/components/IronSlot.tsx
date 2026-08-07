@@ -3,7 +3,7 @@ import {Show} from "solid-js";
 import {draggable, dropZone} from "../effects/dnd";
 import {toast} from "../effects/toast";
 import {t} from "../store/i18n";
-import {cancel, drop, now, state} from "../store/store";
+import {cancel, drop, ironSlots, now, state} from "../store/store";
 import {
   BURNT_SECONDS,
   colorOf,
@@ -13,6 +13,7 @@ import {
 } from "../store/tosti";
 
 import {faceFor} from "./faces";
+import {tallSlot, wideSlot} from "./ironLayout";
 import {TostiSvg} from "./TostiSvg";
 
 function GrillingTosti(props: {slot: number; tosti: Tosti}) {
@@ -120,8 +121,10 @@ export function IronSlot(props: {slot: number}) {
   return (
     <div
       data-drop={zone.key()}
-      class="grill-ridges relative flex min-h-44 items-center justify-center rounded-2xl shadow-[inset_0_2px_10px_rgba(0,0,0,0.55)] transition duration-150"
+      class="grill-ridges relative flex min-h-(--slot-min) items-center justify-center rounded-2xl shadow-[inset_0_2px_10px_rgba(0,0,0,0.55)] transition duration-150"
       classList={{
+        "sm:row-span-2": tallSlot(props.slot, ironSlots()),
+        "max-sm:col-span-2": wideSlot(props.slot, ironSlots()),
         "ring-2 ring-amber-300/40": Boolean(tosti()) && !zone.over(),
         "ring-1 ring-amber-200/20": !tosti() && !zone.active(),
         "ring-4 ring-lime-300 scale-[1.02]": zone.over(),

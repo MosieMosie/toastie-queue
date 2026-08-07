@@ -1,5 +1,3 @@
-/** Shared between the browser bundle and the Node server — keep it dependency-free. */
-
 export interface Person {
   name: string;
   color: string;
@@ -8,7 +6,6 @@ export interface Person {
 export interface Tosti {
   id: string;
   person: string;
-  /** epoch ms the tosti went onto the iron, null while it waits in the queue */
   placedAt: number | null;
 }
 
@@ -16,7 +13,6 @@ export interface State {
   iron: (Tosti | null)[];
   queue: Tosti[];
   served: number;
-  /** all-time tostis eaten per person */
   eaten: Record<string, number>;
 }
 
@@ -25,7 +21,6 @@ export const MAX_IRON_SLOTS = 8;
 export const DEFAULT_IRON_SLOTS = 4;
 export const NAME_MAX = 20;
 
-/** the iron array's length IS the configured slot count; keep it in range */
 export const clampSlots = (n: number) =>
   Math.max(MIN_IRON_SLOTS, Math.min(MAX_IRON_SLOTS, Math.floor(n)));
 
@@ -81,12 +76,14 @@ export function sanitizeState(value: unknown): State | null {
   if (!value || typeof value !== "object") {
     return null;
   }
+
   const s = value as Record<string, unknown>;
-  const iron = Array.isArray(s.iron) ? s.iron : null;
-  const slots = iron ? clampSlots(iron.length) : DEFAULT_IRON_SLOTS;
+  const iron: unknown[] =
+    Array.isArray(s.iron) ? s.iron : Array(DEFAULT_IRON_SLOTS).fill(null);
+
   return {
-    iron: Array.from({length: slots}, (_slot, i) =>
-      iron && isTosti(iron[i]) ? iron[i] : null,
+    iron: Array.from({length: clampSlots(iron.length)}, (_slot, i) =>
+      isTosti(iron[i]) ? iron[i] : null,
     ),
     queue: (Array.isArray(s.queue) ? s.queue : [])
       .filter(isTosti)

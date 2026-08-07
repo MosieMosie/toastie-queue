@@ -122,24 +122,23 @@ export const freeSlot = () => state.iron.findIndex((t) => t === null);
 export const ironCount = () => state.iron.filter(Boolean).length;
 export const ironSlots = () => state.iron.length;
 
-/** resize the iron; tostis that no longer fit go back to the queue front */
+const requeued = (t: Tosti): Tosti => ({...t, placedAt: null});
+
 export function setIronSlots(n: number) {
   const count = clampSlots(n);
   if (count === state.iron.length) {
     return 0;
   }
-  let bumped = 0;
+  const grilling = state.iron.filter((t): t is Tosti => t !== null);
+  const overflow = grilling.slice(count);
   setState(
     produce((s) => {
-      const grilling = s.iron.filter((t): t is Tosti => t !== null);
-      const overflow = grilling.splice(count);
-      bumped = overflow.length;
       s.iron = Array.from({length: count}, (_slot, i) => grilling[i] ?? null);
-      s.queue.unshift(...overflow.map((t) => ({...t, placedAt: null})));
+      s.queue.unshift(...overflow.map(requeued));
     }),
   );
   save();
-  return bumped;
+  return overflow.length;
 }
 export const tostiCount = (person: string) =>
   state.iron.filter((t) => t?.person === person).length +
@@ -202,7 +201,7 @@ export function drop(ref: DragRef, target: DropTarget) {
           const moving = s.queue[i];
           const occupant = s.iron[slot];
           if (occupant) {
-            s.queue[i] = {...occupant, placedAt: null};
+            s.queue[i] = requeued(occupant);
           } else {
             s.queue.splice(i, 1);
           }
@@ -241,7 +240,7 @@ export function drop(ref: DragRef, target: DropTarget) {
       setState(
         produce((s) => {
           s.iron[ref.slot] = null;
-          s.queue.splice(index, 0, {...moving, placedAt: null});
+          s.queue.splice(index, 0, requeued(moving));
         }),
       );
     } else {

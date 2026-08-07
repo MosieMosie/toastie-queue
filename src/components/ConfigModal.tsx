@@ -5,9 +5,9 @@ import {t} from "../store/i18n";
 import {ironSlots, setIronSlots} from "../store/store";
 import {MAX_IRON_SLOTS, MIN_IRON_SLOTS} from "../store/tosti";
 
+import {tallSlot} from "./ironLayout";
 import {Modal} from "./ui";
 
-// module-level so the header button can drive it
 export const [configOpen, setConfigOpen] = createSignal(false);
 
 const SIZES = Array.from(
@@ -15,22 +15,15 @@ const SIZES = Array.from(
   (_size, i) => MIN_IRON_SLOTS + i,
 );
 
-/** miniature iron: the grid this slot count produces, same shape as Iron.tsx */
 function LayoutPreview(props: {count: number; active: boolean}) {
-  const columns = () => Math.ceil(Math.sqrt(props.count));
-
   return (
-    <div
-      class="grid w-full gap-0.5"
-      style={{
-        "grid-template-columns": `repeat(${columns()}, minmax(0, 1fr))`,
-      }}
-    >
+    <div class="grid h-9 w-full grid-flow-col grid-rows-2 gap-0.5">
       <For each={Array.from({length: props.count}, (_slot, i) => i)}>
-        {() => (
+        {(i) => (
           <div
-            class="aspect-[3/2] rounded-[3px]"
+            class="rounded-[3px]"
             classList={{
+              "row-span-2": tallSlot(i, props.count),
               "bg-amber-50/80": props.active,
               "bg-amber-900/25": !props.active,
             }}
@@ -70,21 +63,24 @@ export function ConfigModal() {
         </p>
         <div class="grid grid-cols-4 gap-2">
           <For each={SIZES}>
-            {(count) => (
-              <button
-                type="button"
-                onClick={() => pick(count)}
-                class="flex flex-col items-center gap-1.5 rounded-2xl p-2 pt-2.5 transition active:scale-95"
-                classList={{
-                  "bg-amber-900 text-amber-50 shadow-md": ironSlots() === count,
-                  "bg-amber-50/60 text-amber-950 ring-1 ring-amber-900/10":
-                    ironSlots() !== count,
-                }}
-              >
-                <span class="text-lg leading-none font-black">{count}</span>
-                <LayoutPreview count={count} active={ironSlots() === count} />
-              </button>
-            )}
+            {(count) => {
+              const active = () => ironSlots() === count;
+              return (
+                <button
+                  type="button"
+                  onClick={() => pick(count)}
+                  class="flex flex-col items-center gap-1.5 rounded-2xl p-2 pt-2.5 transition active:scale-95"
+                  classList={{
+                    "bg-amber-900 text-amber-50 shadow-md": active(),
+                    "bg-amber-50/60 text-amber-950 ring-1 ring-amber-900/10":
+                      !active(),
+                  }}
+                >
+                  <span class="text-lg leading-none font-black">{count}</span>
+                  <LayoutPreview count={count} active={active()} />
+                </button>
+              );
+            }}
           </For>
         </div>
         <p class="text-xs font-semibold text-amber-900/50">
