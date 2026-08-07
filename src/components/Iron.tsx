@@ -1,13 +1,14 @@
 import {For} from "solid-js";
 
 import {t} from "../store/i18n";
-import {ironCount} from "../store/store";
-import {IRON_SLOTS} from "../store/tosti";
+import {ironCount, ironSlots} from "../store/store";
 
 import {IronSlot} from "./IronSlot";
 
 export function Iron() {
   const anyGrilling = () => ironCount() > 0;
+  // keep the grid roughly square: 1→1, 2-4→2, 5-8→3 columns
+  const columns = () => Math.ceil(Math.sqrt(ironSlots()));
 
   return (
     <div class="relative w-full">
@@ -22,8 +23,15 @@ export function Iron() {
 
       <div class="relative rounded-[1.75rem] bg-gradient-to-b from-zinc-600 via-zinc-800 to-zinc-900 p-3 shadow-2xl ring-1 ring-black/40">
         <div class="rounded-2xl bg-[#241a14] p-2.5 shadow-[inset_0_4px_16px_rgba(0,0,0,0.7)]">
-          <div class="grid grid-cols-2 gap-2.5">
-            <For each={Array.from({length: IRON_SLOTS}, (_slot, i) => i)}>
+          <div
+            class="grid gap-2.5"
+            classList={{
+              "grid-cols-1": columns() === 1,
+              "grid-cols-2": columns() >= 2,
+              "sm:grid-cols-3": columns() === 3,
+            }}
+          >
+            <For each={Array.from({length: ironSlots()}, (_slot, i) => i)}>
               {(slot) => <IronSlot slot={slot} />}
             </For>
           </div>
@@ -43,7 +51,7 @@ export function Iron() {
             </span>
           </div>
           <span class="text-[10px] font-bold tracking-widest text-zinc-400 uppercase">
-            {t("iron.occupied", {n: ironCount(), total: IRON_SLOTS})}
+            {t("iron.occupied", {n: ironCount(), total: ironSlots()})}
           </span>
         </div>
 

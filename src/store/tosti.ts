@@ -3,7 +3,8 @@ import {createRoot, createSignal} from "solid-js";
 import {Person} from "../../shared/state";
 
 export {
-  IRON_SLOTS,
+  MAX_IRON_SLOTS,
+  MIN_IRON_SLOTS,
   NAME_MAX,
   type Person,
   type Tosti,

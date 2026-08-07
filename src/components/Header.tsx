@@ -2,6 +2,7 @@ import {toast} from "../effects/toast";
 import {lang, setLang, t} from "../store/i18n";
 import {clearAll, fillIron, freeSlot, state} from "../store/store";
 
+import {setConfigOpen} from "./ConfigModal";
 import {setPeopleOpen} from "./PeopleModal";
 import {setScoreboardOpen} from "./Scoreboard";
 import {TostiSvg} from "./TostiSvg";
@@ -71,6 +72,14 @@ export function Header() {
           class={btnSecondary}
         >
           🏆 {t("scoreboard.button")}
+        </button>
+        <button
+          type="button"
+          onClick={() => setConfigOpen(true)}
+          class={btnSecondary}
+          title={t("config.title")}
+        >
+          ⚙️ {t("config.button")}
         </button>
         <button
           type="button"

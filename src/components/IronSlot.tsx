@@ -120,7 +120,7 @@ export function IronSlot(props: {slot: number}) {
   return (
     <div
       data-drop={zone.key()}
-      class="grill-ridges relative flex min-h-44 items-center justify-center rounded-2xl shadow-[inset_0_2px_10px_rgba(0,0,0,0.55)] transition duration-150 sm:aspect-[3/2]"
+      class="grill-ridges relative flex min-h-44 items-center justify-center rounded-2xl shadow-[inset_0_2px_10px_rgba(0,0,0,0.55)] transition duration-150"
       classList={{
         "ring-2 ring-amber-300/40": Boolean(tosti()) && !zone.over(),
         "ring-1 ring-amber-200/20": !tosti() && !zone.active(),

@@ -1,7 +1,7 @@
 import {createRoot, createSignal} from "solid-js";
 import {createStore, produce, reconcile} from "solid-js/store";
 
-import {emptyState, sanitizeState, State} from "../../shared/state";
+import {clampSlots, emptyState, sanitizeState, State} from "../../shared/state";
 
 import {Person, setPeople, Tosti} from "./tosti";
 
@@ -120,6 +120,27 @@ const newId = () => `t${Date.now().toString(36)}-${(seq++).toString(36)}`;
 
 export const freeSlot = () => state.iron.findIndex((t) => t === null);
 export const ironCount = () => state.iron.filter(Boolean).length;
+export const ironSlots = () => state.iron.length;
+
+/** resize the iron; tostis that no longer fit go back to the queue front */
+export function setIronSlots(n: number) {
+  const count = clampSlots(n);
+  if (count === state.iron.length) {
+    return 0;
+  }
+  let bumped = 0;
+  setState(
+    produce((s) => {
+      const grilling = s.iron.filter((t): t is Tosti => t !== null);
+      const overflow = grilling.splice(count);
+      bumped = overflow.length;
+      s.iron = Array.from({length: count}, (_slot, i) => grilling[i] ?? null);
+      s.queue.unshift(...overflow.map((t) => ({...t, placedAt: null})));
+    }),
+  );
+  save();
+  return bumped;
+}
 export const tostiCount = (person: string) =>
   state.iron.filter((t) => t?.person === person).length +
   state.queue.filter((t) => t.person === person).length;

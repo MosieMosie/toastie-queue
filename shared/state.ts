@@ -20,11 +20,17 @@ export interface State {
   eaten: Record<string, number>;
 }
 
-export const IRON_SLOTS = 4;
+export const MIN_IRON_SLOTS = 1;
+export const MAX_IRON_SLOTS = 8;
+export const DEFAULT_IRON_SLOTS = 4;
 export const NAME_MAX = 20;
 
+/** the iron array's length IS the configured slot count; keep it in range */
+export const clampSlots = (n: number) =>
+  Math.max(MIN_IRON_SLOTS, Math.min(MAX_IRON_SLOTS, Math.floor(n)));
+
 export const emptyState = (): State => ({
-  iron: Array.from({length: IRON_SLOTS}, () => null),
+  iron: Array.from({length: DEFAULT_IRON_SLOTS}, () => null),
   queue: [],
   served: 0,
   eaten: {},
@@ -76,10 +82,11 @@ export function sanitizeState(value: unknown): State | null {
     return null;
   }
   const s = value as Record<string, unknown>;
-  const iron = Array.isArray(s.iron) ? s.iron : [];
+  const iron = Array.isArray(s.iron) ? s.iron : null;
+  const slots = iron ? clampSlots(iron.length) : DEFAULT_IRON_SLOTS;
   return {
-    iron: Array.from({length: IRON_SLOTS}, (_slot, i) =>
-      isTosti(iron[i]) ? iron[i] : null,
+    iron: Array.from({length: slots}, (_slot, i) =>
+      iron && isTosti(iron[i]) ? iron[i] : null,
     ),
     queue: (Array.isArray(s.queue) ? s.queue : [])
       .filter(isTosti)

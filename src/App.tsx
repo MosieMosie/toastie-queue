@@ -1,5 +1,6 @@
 import {Component} from "solid-js";
 
+import {ConfigModal} from "./components/ConfigModal";
 import {DragGhost} from "./components/DragGhost";
 import {Header} from "./components/Header";
 import {Iron} from "./components/Iron";
@@ -24,6 +25,7 @@ const App: Component = () => (
     </main>
 
     <DragGhost />
+    <ConfigModal />
     <PeopleModal />
     <Scoreboard />
     <Toast />
