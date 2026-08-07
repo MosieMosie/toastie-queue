@@ -21,7 +21,7 @@ export function Iron() {
 
       <div class="relative rounded-[1.75rem] bg-gradient-to-b from-zinc-600 via-zinc-800 to-zinc-900 p-3 shadow-2xl ring-1 ring-black/40">
         <div class="rounded-2xl bg-[#241a14] p-2.5 shadow-[inset_0_4px_16px_rgba(0,0,0,0.7)]">
-          <div class="grid grid-cols-2 gap-2.5 [--slot-min:11rem] sm:grid-flow-col sm:grid-cols-none sm:auto-cols-fr sm:grid-rows-[repeat(2,minmax(var(--slot-min),1fr))]">
+          <div class="grid grid-cols-2 gap-2.5 [--slot-min:11rem] sm:grid-flow-col sm:grid-cols-none sm:auto-cols-fr sm:grid-rows-[repeat(2,minmax(var(--slot-min),1fr))] sm:[--slot-min:13.5rem]">
             <For each={Array.from({length: ironSlots()}, (_slot, i) => i)}>
               {(slot) => <IronSlot slot={slot} />}
             </For>

@@ -51,7 +51,7 @@ function GrillingTosti(props: {slot: number; tosti: Tosti}) {
       <TostiSvg
         doneness={Math.min(2, progress() * 1.15)}
         face={status() === "burnt" ? "ko" : faceFor(props.tosti.id)}
-        class="h-14 shrink-0 drop-shadow-[0_4px_6px_rgba(0,0,0,0.45)]"
+        class="h-14 shrink-0 drop-shadow-[0_4px_6px_rgba(0,0,0,0.45)] sm:h-20"
       />
 
       <div
