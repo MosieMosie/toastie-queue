@@ -2,7 +2,7 @@ import {createSignal, Show} from "solid-js";
 
 import {t} from "../../store/i18n";
 import {setPersonGrill} from "../../store/store";
-import {personOf} from "../../store/tosti";
+import {personOf} from "../../store/toastie";
 import {Avatar} from "../Avatar";
 import {GrillSlider} from "../GrillSlider";
 

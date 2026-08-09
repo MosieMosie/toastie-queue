@@ -3,14 +3,14 @@ import {For, Show} from "solid-js";
 import {draggable} from "../effects/dnd";
 import {toast} from "../effects/toast";
 import {t} from "../store/i18n";
-import {drop, freeSlot, state, tostiCount} from "../store/store";
-import {people, Person} from "../store/tosti";
+import {drop, freeSlot, state, toastieCount} from "../store/store";
+import {people, Person} from "../store/toastie";
 
 import {Avatar} from "./Avatar";
 
 function PersonChip(props: {person: Person}) {
   const name = () => props.person.name;
-  const mine = () => tostiCount(name());
+  const mine = () => toastieCount(name());
 
   const quickAdd = () => {
     const slot = freeSlot();

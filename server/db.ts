@@ -17,10 +17,19 @@ import {migrate} from "./migrations.ts";
 
 const STATE_KEY = "state-v1";
 
-const dataDir = process.env.TOSTI_DATA_DIR ?? path.join(process.cwd(), "data");
+const dataDir =
+  process.env.TOASTIE_DATA_DIR ?? path.join(process.cwd(), "data");
 mkdirSync(dataDir, {recursive: true});
 
-const db = new DatabaseSync(path.join(dataDir, "tosti.db"));
+const db = new DatabaseSync(path.join(dataDir, "toastie.db"));
+
+// The kiosk gets switched off at the wall, so an abrupt power cut is the normal
+// way this process ends. WAL survives that where the default rollback journal
+// can leave a corrupt file behind. NORMAL trades the last transaction or two
+// for far fewer writes to the Pi's flash, and losing one drag of a toastie is fine.
+db.exec("PRAGMA journal_mode = WAL");
+db.exec("PRAGMA synchronous = NORMAL");
+
 migrate(db);
 
 const stmt = {

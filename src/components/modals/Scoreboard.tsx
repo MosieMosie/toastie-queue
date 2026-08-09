@@ -2,9 +2,9 @@ import {createMemo, createSignal, For, Show} from "solid-js";
 
 import {t} from "../../store/i18n";
 import {state} from "../../store/store";
-import {colorOf} from "../../store/tosti";
+import {colorOf} from "../../store/toastie";
 import {Avatar} from "../Avatar";
-import {TostiSvg} from "../tosti/TostiSvg";
+import {ToastieSvg} from "../toastie/ToastieSvg";
 
 import {Modal} from "./Modal";
 
@@ -13,7 +13,7 @@ export const [scoreboardOpen, setScoreboardOpen] = createSignal(false);
 function EmptyScoreboard() {
   return (
     <div class="flex flex-col items-center gap-3 py-8 text-center">
-      <TostiSvg doneness={0.1} class="h-14 opacity-60" />
+      <ToastieSvg doneness={0.1} class="h-14 opacity-60" />
       <p class="text-sm font-semibold text-amber-900/60">
         {t("scoreboard.empty")}
       </p>

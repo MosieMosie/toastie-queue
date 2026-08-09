@@ -4,10 +4,10 @@ import {draggable} from "../../effects/dnd";
 import {toast} from "../../effects/toast";
 import {t} from "../../store/i18n";
 import {cancel, drop, now} from "../../store/store";
-import {colorOf, grillProgress, statusOf, Tosti} from "../../store/tosti";
+import {colorOf, grillProgress, statusOf, Toastie} from "../../store/toastie";
 import {openGrillModal} from "../modals/GrillModal";
-import {faceFor} from "../tosti/faces";
-import {TostiSvg} from "../tosti/TostiSvg";
+import {faceFor} from "../toastie/faces";
+import {ToastieSvg} from "../toastie/ToastieSvg";
 
 import {GrillTimer} from "./GrillTimer";
 
@@ -57,19 +57,19 @@ function CancelButton(props: {person: string; onCancel: () => void}) {
   );
 }
 
-export function GrillingTosti(props: {slot: number; tosti: Tosti}) {
-  const status = () => statusOf(props.tosti, now());
+export function GrillingToastie(props: {slot: number; toastie: Toastie}) {
+  const status = () => statusOf(props.toastie, now());
   // slightly ahead of the timer, so it already looks golden when it is ready
-  const browning = () => grillProgress(props.tosti, now()) * 1.15;
+  const browning = () => grillProgress(props.toastie, now()) * 1.15;
 
   const takeOff = () => {
     if (drop({from: "iron", slot: props.slot}, {kind: "plate"})) {
-      toast(t("toast.enjoy", {name: props.tosti.person}));
+      toast(t("toast.enjoy", {name: props.toastie.person}));
     }
   };
 
   const cancelled = () => {
-    const name = props.tosti.person;
+    const name = props.toastie.person;
     cancel({from: "iron", slot: props.slot});
     toast(t("toast.cancelled", {name}));
   };
@@ -78,26 +78,26 @@ export function GrillingTosti(props: {slot: number; tosti: Tosti}) {
     <div
       {...draggable({
         ref: () => ({from: "iron", slot: props.slot}),
-        label: () => props.tosti.person,
-        onDoubleTap: () => openGrillModal(props.tosti.person),
+        label: () => props.toastie.person,
+        onDoubleTap: () => openGrillModal(props.toastie.person),
       })}
       class="pop-in relative flex h-full w-full touch-none flex-col items-center justify-center gap-1 p-1.5 select-none"
-      title={t("iron.slotTitle", {name: props.tosti.person})}
+      title={t("iron.slotTitle", {name: props.toastie.person})}
     >
       <Show when={status() !== "burnt"}>
         <Steam />
       </Show>
 
-      <TostiSvg
+      <ToastieSvg
         doneness={browning()}
-        face={status() === "burnt" ? "ko" : faceFor(props.tosti.id)}
+        face={status() === "burnt" ? "ko" : faceFor(props.toastie.id)}
         class="h-14 shrink-0 drop-shadow-[0_4px_6px_rgba(0,0,0,0.45)] sm:h-20"
       />
 
-      <NameTag person={props.tosti.person} />
-      <GrillTimer tosti={props.tosti} />
+      <NameTag person={props.toastie.person} />
+      <GrillTimer toastie={props.toastie} />
       <TakeButton onTake={takeOff} />
-      <CancelButton person={props.tosti.person} onCancel={cancelled} />
+      <CancelButton person={props.toastie.person} onCancel={cancelled} />
     </div>
   );
 }

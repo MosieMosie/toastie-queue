@@ -1,13 +1,13 @@
 import {createEffect, createRoot} from "solid-js";
 
 import {now, state} from "../store/store";
-import {statusOf} from "../store/tosti";
+import {statusOf} from "../store/toastie";
 
 import {playReadyChime} from "./sound";
 
 /**
- * Rings the chime the moment a tosti reaches its eater's grill time. Each tosti
- * chimes once; a page load with an already-ready tosti stays silent instead of
+ * Rings the chime the moment a toastie reaches its eater's grill time. Each toastie
+ * chimes once; a page load with an already-ready toastie stays silent instead of
  * re-announcing old news.
  */
 createRoot(() => {
@@ -17,12 +17,12 @@ createRoot(() => {
   createEffect(() => {
     const at = now();
     const ready = new Set(
-      state.iron.flatMap((tosti) =>
-        tosti && statusOf(tosti, at) !== "grilling" ? [tosti.id] : [],
+      state.iron.flatMap((toastie) =>
+        toastie && statusOf(toastie, at) !== "grilling" ? [toastie.id] : [],
       ),
     );
 
-    // a tosti taken off the iron is forgotten, so a reused id can chime again
+    // a toastie taken off the iron is forgotten, so a reused id can chime again
     for (const id of announced) {
       if (!ready.has(id)) {
         announced.delete(id);

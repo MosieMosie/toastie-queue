@@ -1,13 +1,10 @@
 services:
-  tosti:
+  toastie:
     build: .
-    image: tosti-wachtrij
-    container_name: tosti
+    image: toastie-queue
+    container_name: toastie
     ports:
       - "8080:3000"
     volumes:
-      - tosti-data:/data
+      - ./data:/data
     restart: unless-stopped
-
-volumes:
-  tosti-data:

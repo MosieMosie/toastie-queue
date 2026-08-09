@@ -3,7 +3,7 @@ import {Show} from "solid-js";
 import {dropZone} from "../effects/dnd";
 import {t} from "../store/i18n";
 
-import {TostiSvg} from "./tosti/TostiSvg";
+import {ToastieSvg} from "./toastie/ToastieSvg";
 
 export function Plate() {
   const zone = dropZone(() => ({kind: "plate"}));
@@ -22,7 +22,7 @@ export function Plate() {
         <div class="h-11 w-11 rounded-full bg-amber-100 shadow-inner ring-1 ring-amber-900/15" />
         <Show when={zone.over()}>
           <div class="pointer-events-none absolute inset-0 grid place-items-center">
-            <TostiSvg doneness={1} class="w-10" />
+            <ToastieSvg doneness={1} class="w-10" />
           </div>
         </Show>
       </div>

@@ -44,9 +44,11 @@ function validate(person: Person, replacing?: string): PersonError | null {
   if (!person.name || person.name.length > NAME_MAX) {
     return "invalid-name";
   }
+
   if (!COLOR_RE.test(person.color)) {
     return "invalid-color";
   }
+
   const taken = db
     .listPeople()
     .some(
@@ -54,6 +56,7 @@ function validate(person: Person, replacing?: string): PersonError | null {
         p.name !== replacing &&
         p.name.toLowerCase() === person.name.toLowerCase(),
     );
+
   return taken ? "duplicate" : null;
 }
 
@@ -106,6 +109,7 @@ const putState: Handler = async ({req, res}) => {
   if (!state) {
     return fail(res, "invalid-state");
   }
+
   db.saveState(state);
   // the sender already has this state applied locally
   publish("state", state, req.headers["x-client-id"] as string | undefined);
@@ -118,6 +122,7 @@ const postPerson: Handler = async ({req, res}) => {
   if (invalid) {
     return fail(res, invalid);
   }
+
   db.insertPerson(person);
   publish("people", db.listPeople());
   ok(res);
@@ -128,19 +133,22 @@ const patchPerson: Handler = async ({req, res, param}) => {
   if (!current) {
     return json(res, 404, {error: "not-found"});
   }
+
   const person = personFrom(await readBody(req), current);
   const invalid = validate(person, param);
   if (invalid) {
     return fail(res, invalid);
   }
+
   db.updatePerson(param, person);
   if (person.name !== param) {
-    // tostis on the iron and the eaten tally are keyed by name
+    // toasties on the iron and the eaten tally are keyed by name
     const state = db.loadState();
     renamePersonInState(state, param, person.name);
     db.saveState(state);
     publish("state", state);
   }
+
   publish("people", db.listPeople());
   ok(res);
 };

@@ -15,7 +15,7 @@ No accounts, last writer wins. In dev the API runs as Vite middleware; in produc
 `server/index.ts` serves `dist/` plus the API. Node 24+, zero runtime dependencies.
 
 Names, colors and per-person eaten counts are managed in the app (Edit and Scoreboard
-buttons). Renames keep tostis and scores, deletes don't. UI is EN/NL, strings in
+buttons). Renames keep toasties and scores, deletes don't. UI is EN/NL, strings in
 `src/store/i18n.ts`.
 
 The UI targets a 13.3" touchscreen: pointer-event dragging (`src/effects/dnd.ts`, the
@@ -24,26 +24,44 @@ keyboard on touch-only devices. Fits 1280x720 without scrolling.
 
 ## Layout
 
-- `shared/` — types, limits and sanitising used by both sides
-- `server/` — HTTP API, SQLite access, SSE broadcast
-- `src/store/` — client state (`store.ts`), derived tosti logic (`tosti.ts`), strings (`i18n.ts`)
-- `src/effects/` — dragging, toasts, the ready chime
-- `src/components/` — grouped per area: `iron/`, `people/`, `tosti/`, `modals/`
+- `shared/`: types, limits and sanitising used by both sides
+- `server/`: HTTP API, SQLite access, SSE broadcast
+- `src/store/`: client state (`store.ts`), toastie logic (`toastie.ts`), strings (`i18n.ts`)
+- `src/effects/`: dragging, toasts, the ready chime
+- `src/components/`: grouped per area, `iron/`, `people/`, `toastie/`, `modals/`
 
 ## Tweaking
 
 - grill times (`MIN`/`MAX`/`DEFAULT_GRILL_SECONDS`, `BURNT_FACTOR`), slot count
   (`MIN`/`MAX`/`DEFAULT_IRON_SLOTS`) and `NAME_MAX`: `shared/state.ts`
-- `PALETTE`: `src/store/tosti.ts`
-- faces and the tosti drawing: `src/components/tosti/faces.tsx`, `TostiSvg.tsx`
+- `PALETTE`: `src/store/toastie.ts`
+- faces and the toastie drawing: `src/components/toastie/faces.tsx`, `ToastieSvg.tsx`
 
 ## Deploy
 
+The image builds the bundle itself, so the box only needs Docker. No Node on it,
+and no copying `dist/` around. Ship the source and rebuild in place:
+
 ```bash
+git clone https://github.com/MosieMosie/toastie-queue.git
+cd toastie-queue
 docker compose up -d --build   # http://<host>:8080
 ```
 
-Database sits in the `tosti-data` volume. Kiosk: `chromium --kiosk --app=http://localhost:8080`.
+To update: `git pull && docker compose up -d --build`. The container gets
+replaced, `data/` stays put.
+
+The database is a bind mount at `data/toastie.db`, so a backup is
+`scp <host>:~/toastie-queue/data/toastie.db .`. If you copy it while the server is
+running, use `sqlite3 toastie.db ".backup 'out.db'"` rather than `cp`. The file is
+in WAL mode and a plain copy of a live database can come out torn.
+
+`restart: unless-stopped` brings the container back after a reboot, as long as
+Docker itself starts on boot (`sudo systemctl enable --now docker`).
+
+Kiosk: point a browser at it full screen, `chromium --kiosk http://localhost:8080`.
+Wait for the container to answer before launching, the browser starts well before
+Docker does.
 
 `pnpm dev` listens on all interfaces, so phones on the same wifi can join.
 There is no auth. Keep it off the internet.

@@ -1,6 +1,6 @@
 import {For} from "solid-js";
 
-import {PALETTE} from "../../store/tosti";
+import {PALETTE} from "../../store/toastie";
 
 export function ColorPicker(props: {
   color: string;

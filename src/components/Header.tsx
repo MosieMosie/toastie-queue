@@ -6,7 +6,7 @@ import {btnPrimary, btnSecondary} from "./buttons";
 import {setConfigOpen} from "./modals/ConfigModal";
 import {setPeopleOpen} from "./modals/PeopleModal";
 import {setScoreboardOpen} from "./modals/Scoreboard";
-import {TostiSvg} from "./tosti/TostiSvg";
+import {ToastieSvg} from "./toastie/ToastieSvg";
 
 function shiftUp() {
   const moved = fillIron();
@@ -23,7 +23,7 @@ export function Header() {
   return (
     <header class="flex flex-none flex-wrap items-center justify-between gap-2 px-3 py-2.5 sm:gap-3 sm:px-5 sm:py-3">
       <div class="flex items-center gap-2.5">
-        <TostiSvg doneness={0.95} class="h-9 drop-shadow-sm" />
+        <ToastieSvg doneness={0.95} class="h-9 drop-shadow-sm" />
         <div>
           <h1 class="text-xl leading-none font-black tracking-tight">
             {t("app.title")}

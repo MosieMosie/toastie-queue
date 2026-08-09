@@ -15,7 +15,7 @@ import {
   people,
   Person,
   personOf,
-} from "../../store/tosti";
+} from "../../store/toastie";
 import {btnPrimary, btnSecondary} from "../buttons";
 import {GrillSlider} from "../GrillSlider";
 import {ColorPicker} from "../people/ColorPicker";

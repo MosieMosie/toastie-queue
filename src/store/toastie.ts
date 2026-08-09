@@ -4,7 +4,7 @@ import {
   BURNT_FACTOR,
   DEFAULT_GRILL_SECONDS,
   Person,
-  Tosti,
+  Toastie,
 } from "../../shared/state";
 
 export {
@@ -16,7 +16,7 @@ export {
   MIN_IRON_SLOTS,
   NAME_MAX,
   type Person,
-  type Tosti,
+  type Toastie,
 } from "../../shared/state";
 
 export const [people, setPeople] = createSignal<Person[]>([]);
@@ -42,25 +42,25 @@ export const colorOf = (person: string) => personOf(person)?.color ?? "#8a5a2b";
 
 /**
  * The timer runs on the eater's own setting, so changing it also moves the
- * finish line for a tosti already on the iron. That is intended: it is how you
- * give a tosti another minute.
+ * finish line for a toastie already on the iron. That is intended: it is how you
+ * give a toastie another minute.
  */
 export const grillSecondsOf = (person: string) =>
   personOf(person)?.grillSeconds ?? DEFAULT_GRILL_SECONDS;
 
-export const secondsOnIron = (tosti: Tosti, now: number) =>
-  tosti.placedAt ? (now - tosti.placedAt) / 1000 : 0;
+export const secondsOnIron = (toastie: Toastie, now: number) =>
+  toastie.placedAt ? (now - toastie.placedAt) / 1000 : 0;
 
 /** 0 when it goes on, 1 at the eater's grill time, and it keeps climbing */
-export const grillProgress = (tosti: Tosti, now: number) =>
-  secondsOnIron(tosti, now) / grillSecondsOf(tosti.person);
+export const grillProgress = (toastie: Toastie, now: number) =>
+  secondsOnIron(toastie, now) / grillSecondsOf(toastie.person);
 
-export type TostiStatus = "grilling" | "ready" | "burnt";
+export type ToastieStatus = "grilling" | "ready" | "burnt";
 
-/** the iron badge and the ready chime must agree on when a tosti is done */
-export function statusOf(tosti: Tosti, now: number): TostiStatus {
-  const seconds = secondsOnIron(tosti, now);
-  const grill = grillSecondsOf(tosti.person);
+/** the iron badge and the ready chime must agree on when a toastie is done */
+export function statusOf(toastie: Toastie, now: number): ToastieStatus {
+  const seconds = secondsOnIron(toastie, now);
+  const grill = grillSecondsOf(toastie.person);
   if (seconds >= grill * BURNT_FACTOR) {
     return "burnt";
   }

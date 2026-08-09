@@ -4,15 +4,15 @@ export interface Person {
   grillSeconds: number;
 }
 
-export interface Tosti {
+export interface Toastie {
   id: string;
   person: string;
   placedAt: number | null;
 }
 
 export interface State {
-  iron: (Tosti | null)[];
-  queue: Tosti[];
+  iron: (Toastie | null)[];
+  queue: Toastie[];
   served: number;
   eaten: Record<string, number>;
 }
@@ -52,9 +52,9 @@ export function renamePersonInState(
   oldName: string,
   newName: string,
 ) {
-  for (const tosti of [...state.iron, ...state.queue]) {
-    if (tosti?.person === oldName) {
-      tosti.person = newName;
+  for (const toastie of [...state.iron, ...state.queue]) {
+    if (toastie?.person === oldName) {
+      toastie.person = newName;
     }
   }
 
@@ -64,7 +64,7 @@ export function renamePersonInState(
   }
 }
 
-function isTosti(value: unknown): value is Tosti {
+function isToastie(value: unknown): value is Toastie {
   if (!value || typeof value !== "object") {
     return false;
   }
@@ -105,10 +105,10 @@ export function sanitizeState(value: unknown): State | null {
 
   return {
     iron: Array.from({length: slots}, (_slot, i) =>
-      isTosti(iron[i]) ? iron[i] : null,
+      isToastie(iron[i]) ? iron[i] : null,
     ),
     queue: (Array.isArray(s.queue) ? s.queue : [])
-      .filter(isTosti)
+      .filter(isToastie)
       .slice(0, 100),
     served:
       typeof s.served === "number" && Number.isFinite(s.served) ?

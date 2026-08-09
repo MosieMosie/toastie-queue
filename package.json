@@ -1,5 +1,5 @@
 {
-  "name": "tosti-wachtrij",
+  "name": "toastie-queue",
   "version": "0.0.0",
   "description": "Whose toastie is this? A queue for the shared toastie iron at work.",
   "type": "module",

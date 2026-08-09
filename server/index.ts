@@ -41,5 +41,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`tosti-wachtrij running at http://localhost:${PORT}`);
+  console.log(`toastie-queue running at http://localhost:${PORT}`);
 });

@@ -1,5 +1,5 @@
 import {t} from "../../store/i18n";
-import {formatDuration, Person} from "../../store/tosti";
+import {formatDuration, Person} from "../../store/toastie";
 import {Avatar} from "../Avatar";
 
 export function PersonRow(props: {

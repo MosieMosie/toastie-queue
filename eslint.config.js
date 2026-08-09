@@ -10,11 +10,11 @@ import tseslint from "typescript-eslint";
 
 export default defineConfig(
   {
-    name: "tosti/ignores",
+    name: "toastie/ignores",
     ignores: ["dist/", "data/"],
   },
   {
-    name: "tosti/options",
+    name: "toastie/options",
     linterOptions: {
       reportUnusedDisableDirectives: "error",
       reportUnusedInlineConfigs: "error",
@@ -59,7 +59,7 @@ export default defineConfig(
     name: "solid/recommended",
   },
   {
-    name: "tosti/rules",
+    name: "toastie/rules",
     files: ["**/*.js", "**/*.ts", "**/*.tsx"],
     rules: {
       // ESLint - https://eslint.org/docs/latest/rules/
@@ -271,7 +271,7 @@ export default defineConfig(
   // required there (a stripped value-import of a type would break at runtime),
   // and console.log is the server's way of talking.
   {
-    name: "tosti/server",
+    name: "toastie/server",
     files: ["server/**/*.ts", "shared/**/*.ts"],
     languageOptions: {
       globals: globals.node,

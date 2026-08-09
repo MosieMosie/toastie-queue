@@ -4,7 +4,7 @@ import {
   GRILL_STEP_SECONDS,
   MAX_GRILL_SECONDS,
   MIN_GRILL_SECONDS,
-} from "../store/tosti";
+} from "../store/toastie";
 
 export function GrillSlider(props: {
   seconds: number;

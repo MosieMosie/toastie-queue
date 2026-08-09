@@ -9,7 +9,7 @@ import {createStore, produce, reconcile} from "solid-js/store";
 
 import {clampSlots, emptyState, sanitizeState, State} from "../../shared/state";
 
-import {Person, setPeople, Tosti} from "./tosti";
+import {Person, setPeople, Toastie} from "./toastie";
 
 export type DragRef =
   | {from: "roster"; person: string}
@@ -96,7 +96,7 @@ async function personRequest(
 export const addPerson = (name: string, color: string, grillSeconds: number) =>
   personRequest("/api/people", "POST", {name, color, grillSeconds});
 
-/** the server carries the person's tostis and eaten tally over */
+/** the server carries the person's toasties and eaten tally over */
 export function renamePerson(oldName: string, name: string, color: string) {
   // an unsaved slider change still belongs to the old name
   flushGrill(oldName);
@@ -156,14 +156,14 @@ export const freeSlot = () => state.iron.findIndex((t) => t === null);
 export const ironCount = () => state.iron.filter(Boolean).length;
 export const ironSlots = () => state.iron.length;
 
-const requeued = (t: Tosti): Tosti => ({...t, placedAt: null});
+const requeued = (t: Toastie): Toastie => ({...t, placedAt: null});
 
 export function setIronSlots(n: number) {
   const count = clampSlots(n);
   if (count === state.iron.length) {
     return 0;
   }
-  const grilling = state.iron.filter((t): t is Tosti => t !== null);
+  const grilling = state.iron.filter((t): t is Toastie => t !== null);
   const overflow = grilling.slice(count);
   setState(
     produce((s) => {
@@ -174,7 +174,7 @@ export function setIronSlots(n: number) {
   save();
   return overflow.length;
 }
-export const tostiCount = (person: string) =>
+export const toastieCount = (person: string) =>
   state.iron.filter((t) => t?.person === person).length +
   state.queue.filter((t) => t.person === person).length;
 
@@ -186,7 +186,7 @@ export function canDrop(ref: DragRef, target: DropTarget): boolean {
       if (ref.from === "iron") {
         return ref.slot !== target.slot;
       }
-      // an occupied slot swaps with the queue, but a fresh tosti needs room
+      // an occupied slot swaps with the queue, but a fresh toastie needs room
       if (ref.from === "roster") {
         return state.iron[target.slot] === null;
       }
@@ -199,7 +199,7 @@ export function canDrop(ref: DragRef, target: DropTarget): boolean {
   }
 }
 
-/** each returns false when the tosti moved away underneath us mid-drag */
+/** each returns false when the toastie moved away underneath us mid-drag */
 function dropOnIron(ref: DragRef, slot: number): boolean {
   if (ref.from === "iron") {
     setState(
@@ -232,7 +232,7 @@ function dropOnIron(ref: DragRef, slot: number): boolean {
     return true;
   }
 
-  // whatever is left comes from the roster: a brand new tosti
+  // whatever is left comes from the roster: a brand new toastie
   setState(
     produce((s) => {
       s.iron[slot] = {id: newId(), person: ref.person, placedAt: Date.now()};

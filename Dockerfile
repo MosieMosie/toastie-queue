@@ -18,6 +18,6 @@ WORKDIR /app
 COPY --from=build /app/dist ./dist
 COPY server ./server
 COPY shared ./shared
-ENV TOSTI_DATA_DIR=/data
+ENV TOASTIE_DATA_DIR=/data
 EXPOSE 3000
 CMD ["node", "server/index.ts"]

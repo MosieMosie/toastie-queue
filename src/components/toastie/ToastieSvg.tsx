@@ -26,8 +26,8 @@ interface Props {
   class?: string;
 }
 
-export function TostiSvg(props: Props) {
-  const id = `tosti${uid++}`;
+export function ToastieSvg(props: Props) {
+  const id = `toastie${uid++}`;
   const done = () => {
     const value = props.doneness ?? GOLDEN;
     return Number.isNaN(value) ? 0 : Math.max(0, Math.min(2, value));

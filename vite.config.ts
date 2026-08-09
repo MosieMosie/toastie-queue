@@ -7,7 +7,7 @@ import {handleApi} from "./server/api.ts";
 
 // in dev the API runs inside the Vite server: one `pnpm dev`, one port
 const apiPlugin = (): Plugin => ({
-  name: "tosti-api",
+  name: "toastie-api",
   configureServer(server) {
     server.middlewares.use((req, res, next) => {
       if (!handleApi(req, res)) {

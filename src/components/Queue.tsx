@@ -4,9 +4,9 @@ import {draggable, dropZone} from "../effects/dnd";
 import {toast} from "../effects/toast";
 import {t} from "../store/i18n";
 import {cancel, drop, freeSlot, state} from "../store/store";
-import {colorOf} from "../store/tosti";
+import {colorOf} from "../store/toastie";
 
-import {TostiSvg} from "./tosti/TostiSvg";
+import {ToastieSvg} from "./toastie/ToastieSvg";
 
 const card =
   "flex min-h-[5.5rem] w-[6.75rem] flex-none flex-col items-center justify-center rounded-2xl p-2 transition";
@@ -52,7 +52,7 @@ function QueueCard(props: {id: string; person: string; index: number}) {
         ✕
       </button>
 
-      <TostiSvg doneness={0.1} face={false} class="h-9 opacity-90" />
+      <ToastieSvg doneness={0.1} face={false} class="h-9 opacity-90" />
       <div
         class="max-w-full truncate rounded-full px-2.5 py-0.5 text-xs font-bold text-white"
         style={{"background-color": colorOf(props.person)}}

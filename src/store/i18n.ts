@@ -166,7 +166,7 @@ const translations = {nl, en};
 
 export type Lang = keyof typeof translations;
 
-const LANG_KEY = "tosti-lang";
+const LANG_KEY = "toastie-lang";
 
 const stored = localStorage.getItem(LANG_KEY);
 const [lang, setLangSignal] = createSignal<Lang>(

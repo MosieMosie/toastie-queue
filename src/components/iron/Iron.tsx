@@ -11,7 +11,7 @@ function IronHood() {
     <div class="mx-auto w-[88%]">
       <div class="flex h-8 items-center justify-center rounded-t-3xl border-t border-zinc-400/60 bg-zinc-600">
         <span class="pl-[0.3em] text-[10px] font-black tracking-[0.3em] text-zinc-200/80 uppercase">
-          tosti&nbsp;3000
+          toastie&nbsp;3000
         </span>
       </div>
       <div class="h-2 rounded-sm bg-zinc-800" />

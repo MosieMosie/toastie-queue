@@ -3,7 +3,7 @@ import {createSignal, For} from "solid-js";
 import {toast} from "../../effects/toast";
 import {t} from "../../store/i18n";
 import {ironSlots, setIronSlots} from "../../store/store";
-import {MAX_IRON_SLOTS, MIN_IRON_SLOTS} from "../../store/tosti";
+import {MAX_IRON_SLOTS, MIN_IRON_SLOTS} from "../../store/toastie";
 import {slotIndexes, tallSlot} from "../iron/ironLayout";
 
 import {Modal} from "./Modal";
