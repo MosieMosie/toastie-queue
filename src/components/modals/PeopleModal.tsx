@@ -110,7 +110,12 @@ export function PeopleModal() {
   };
 
   return (
-    <Modal open={peopleOpen()} onClose={close} title={t("people.title")}>
+    <Modal
+      open={peopleOpen()}
+      onClose={close}
+      title={t("people.title")}
+      keyboard={TOUCH_ONLY}
+    >
       <div class="min-h-0 flex-1 overflow-y-auto">
         <Show
           when={people().length > 0}
