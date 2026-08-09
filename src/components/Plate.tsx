@@ -3,7 +3,7 @@ import {Show} from "solid-js";
 import {dropZone} from "../effects/dnd";
 import {t} from "../store/i18n";
 
-import {TostiSvg} from "./TostiSvg";
+import {TostiSvg} from "./tosti/TostiSvg";
 
 export function Plate() {
   const zone = dropZone(() => ({kind: "plate"}));

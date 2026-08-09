@@ -6,7 +6,7 @@ import {t} from "../store/i18n";
 import {drop, freeSlot, state, tostiCount} from "../store/store";
 import {people, Person} from "../store/tosti";
 
-import {Avatar} from "./ui";
+import {Avatar} from "./Avatar";
 
 function PersonChip(props: {person: Person}) {
   const name = () => props.person.name;

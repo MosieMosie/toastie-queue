@@ -1,24 +1,23 @@
 import {createSignal, For} from "solid-js";
 
-import {toast} from "../effects/toast";
-import {t} from "../store/i18n";
-import {ironSlots, setIronSlots} from "../store/store";
-import {MAX_IRON_SLOTS, MIN_IRON_SLOTS} from "../store/tosti";
+import {toast} from "../../effects/toast";
+import {t} from "../../store/i18n";
+import {ironSlots, setIronSlots} from "../../store/store";
+import {MAX_IRON_SLOTS, MIN_IRON_SLOTS} from "../../store/tosti";
+import {slotIndexes, tallSlot} from "../iron/ironLayout";
 
-import {tallSlot} from "./ironLayout";
-import {Modal} from "./ui";
+import {Modal} from "./Modal";
 
 export const [configOpen, setConfigOpen] = createSignal(false);
 
-const SIZES = Array.from(
-  {length: MAX_IRON_SLOTS - MIN_IRON_SLOTS + 1},
-  (_size, i) => MIN_IRON_SLOTS + i,
+const SIZES = slotIndexes(MAX_IRON_SLOTS - MIN_IRON_SLOTS + 1).map(
+  (i) => MIN_IRON_SLOTS + i,
 );
 
 function LayoutPreview(props: {count: number; active: boolean}) {
   return (
     <div class="grid h-9 w-full grid-flow-col grid-rows-2 gap-0.5">
-      <For each={Array.from({length: props.count}, (_slot, i) => i)}>
+      <For each={slotIndexes(props.count)}>
         {(i) => (
           <div
             class="rounded-[3px]"
@@ -39,15 +38,18 @@ export function ConfigModal() {
     if (count === ironSlots()) {
       return;
     }
+
     const bumped = setIronSlots(count);
     const sized =
       count === 1 ?
         t("toast.slotsChangedOne")
       : t("toast.slotsChangedMany", {n: count});
+
     const suffix =
       bumped === 0 ? ""
       : bumped === 1 ? ` — ${t("toast.slotsBumpedOne")}`
       : ` — ${t("toast.slotsBumpedMany", {n: bumped})}`;
+
     toast(sized + suffix);
   };
 

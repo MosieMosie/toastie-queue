@@ -2,7 +2,7 @@ import {Show} from "solid-js";
 
 import {toastMessage} from "../effects/toast";
 
-import {TostiSvg} from "./TostiSvg";
+import {TostiSvg} from "./tosti/TostiSvg";
 
 export function Toast() {
   return (

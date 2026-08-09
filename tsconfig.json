@@ -16,7 +16,8 @@
     // Type Checking & Safety
     "strict": true,
     "types": ["vite/client", "node"],
-    // Node draait de server-TS zelf (type stripping): alleen wegstreepbare syntax
+    // Node runs the server TypeScript itself by stripping types, which only
+    // works for syntax that is erasable (no enums, no parameter properties).
     "erasableSyntaxOnly": true,
     "allowImportingTsExtensions": true
   }

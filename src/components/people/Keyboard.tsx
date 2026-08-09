@@ -1,9 +1,8 @@
 import {For, Show} from "solid-js";
 
-// a touchscreen kiosk has no OS keyboard, so forms bring this one instead;
-// also drives inputmode="none" so the kiosk never pops a native keyboard.
-// The min-width keeps phones/tablets out: they have an OS keyboard, which
-// beats this one (capitals, autocorrect, the works).
+// A kiosk touchscreen has no OS keyboard, so forms bring this one instead, and
+// set inputmode="none" to keep the browser from offering its own. The min-width
+// excludes phones and tablets: their native keyboard beats this one.
 export const TOUCH_ONLY = window.matchMedia(
   "(any-pointer: coarse) and (not (any-pointer: fine)) and (min-width: 64rem)",
 ).matches;

@@ -1,15 +1,16 @@
 import {Component} from "solid-js";
 
-import {ConfigModal} from "./components/ConfigModal";
 import {ToastiDragGhost} from "./components/DragGhost";
 import {Header} from "./components/Header";
-import {Iron} from "./components/Iron";
-import {ironWidthClass} from "./components/ironLayout";
-import {PeopleModal} from "./components/PeopleModal";
+import {Iron} from "./components/iron/Iron";
+import {ironWidthClass} from "./components/iron/ironLayout";
+import {ConfigModal} from "./components/modals/ConfigModal";
+import {GrillModal} from "./components/modals/GrillModal";
+import {PeopleModal} from "./components/modals/PeopleModal";
+import {Scoreboard} from "./components/modals/Scoreboard";
 import {Plate} from "./components/Plate";
 import {Queue} from "./components/Queue";
 import {Roster} from "./components/Roster";
-import {Scoreboard} from "./components/Scoreboard";
 import {Toast} from "./components/Toast";
 import {ironSlots} from "./store/store";
 
@@ -31,6 +32,7 @@ const App: Component = () => (
     <ToastiDragGhost />
     <ConfigModal />
     <PeopleModal />
+    <GrillModal />
     <Scoreboard />
     <Toast />
   </div>

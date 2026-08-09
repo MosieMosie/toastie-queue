@@ -16,8 +16,10 @@ function mix(a: string, b: string, t: number) {
   return `rgb(${c(r1, r2)} ${c(g1, g2)} ${c(b1, b2)})`;
 }
 
+const GOLDEN = 0.85;
+
 interface Props {
-  /** 0 = raw dough-pale, 1 = perfectly golden, 2 = charcoal */
+  /** how brown to draw it: 0 raw dough-pale, 1 golden, 2 charcoal */
   doneness?: number;
   /** false = blank sandwich */
   face?: FaceKind | false;
@@ -26,7 +28,10 @@ interface Props {
 
 export function TostiSvg(props: Props) {
   const id = `tosti${uid++}`;
-  const done = () => Math.max(0, Math.min(2, props.doneness ?? 0.85));
+  const done = () => {
+    const value = props.doneness ?? GOLDEN;
+    return Number.isNaN(value) ? 0 : Math.max(0, Math.min(2, value));
+  };
 
   const bread = () =>
     done() <= 1 ?

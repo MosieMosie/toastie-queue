@@ -1,4 +1,10 @@
-import {createRoot, createSignal} from "solid-js";
+/**
+ * The queue every screen shares. Actions mutate the local store first so that
+ * dragging stays instant, then push the whole state to the server, which
+ * broadcasts it over SSE to the other screens. Our own clientId travels with
+ * the request so the server can leave us out of that broadcast.
+ */
+import {createSignal} from "solid-js";
 import {createStore, produce, reconcile} from "solid-js/store";
 
 import {clampSlots, emptyState, sanitizeState, State} from "../../shared/state";
@@ -20,11 +26,7 @@ const sanitize = (value: unknown): State =>
 
 export const [state, setState] = createStore<State>(emptyState());
 
-// State lives on the server so every device sees the same queue. Actions
-// mutate the local store first (dragging must feel instant), then push the
-// full state; the server broadcasts it over SSE to every other screen. The
-// clientId keeps our own update from echoing back.
-// No crypto.randomUUID: unavailable on http://<ip> (not a secure context).
+// not crypto.randomUUID: that needs a secure context, and the kiosk is on http://<ip>
 const clientId = Math.random().toString(36).slice(2) + Date.now().toString(36);
 
 function save() {
@@ -33,7 +35,7 @@ function save() {
     headers: {"content-type": "application/json", "x-client-id": clientId},
     body: JSON.stringify(state),
   }).catch(() => {
-    // offline: the next action resends the full state
+    // offline: the next action resends the full state anyway
   });
 }
 
@@ -49,7 +51,7 @@ async function syncFromServer() {
 }
 
 const events = new EventSource(`/api/events?client=${clientId}`);
-// fires on every (re)connect; updates may have been missed while disconnected
+// on every (re)connect: a dropped connection may have missed updates
 events.onopen = () => {
   syncFromServer();
 };
@@ -91,15 +93,48 @@ async function personRequest(
   }
 }
 
-export const addPerson = (name: string, color: string) =>
-  personRequest("/api/people", "POST", {name, color});
+export const addPerson = (name: string, color: string, grillSeconds: number) =>
+  personRequest("/api/people", "POST", {name, color, grillSeconds});
 
-/** rename and/or recolor; the server carries tostis and the eaten tally over */
-export const renamePerson = (oldName: string, name: string, color: string) =>
-  personRequest(`/api/people/${encodeURIComponent(oldName)}`, "PATCH", {
+/** the server carries the person's tostis and eaten tally over */
+export function renamePerson(oldName: string, name: string, color: string) {
+  // an unsaved slider change still belongs to the old name
+  flushGrill(oldName);
+  return personRequest(`/api/people/${encodeURIComponent(oldName)}`, "PATCH", {
     name,
     color,
   });
+}
+
+// the slider fires on every step of a drag; save once the thumb settles
+const GRILL_SAVE_DELAY = 250;
+const pendingGrill = new Map<
+  string,
+  {timer: ReturnType<typeof setTimeout>; grillSeconds: number}
+>();
+
+function flushGrill(name: string) {
+  const pending = pendingGrill.get(name);
+  if (!pending) {
+    return;
+  }
+  clearTimeout(pending.timer);
+  pendingGrill.delete(name);
+  personRequest(`/api/people/${encodeURIComponent(name)}`, "PATCH", {
+    grillSeconds: pending.grillSeconds,
+  });
+}
+
+export function setPersonGrill(name: string, grillSeconds: number) {
+  setPeople((all) =>
+    all.map((p) => (p.name === name ? {...p, grillSeconds} : p)),
+  );
+  clearTimeout(pendingGrill.get(name)?.timer);
+  pendingGrill.set(name, {
+    grillSeconds,
+    timer: setTimeout(() => flushGrill(name), GRILL_SAVE_DELAY),
+  });
+}
 
 export async function removePerson(name: string) {
   try {
@@ -109,11 +144,10 @@ export async function removePerson(name: string) {
   }
 }
 
-export const now = createRoot(() => {
-  const [tick, setTick] = createSignal(Date.now());
-  setInterval(() => setTick(Date.now()), 1000);
-  return tick;
-});
+/** one shared clock, so every timer on screen ticks in step */
+const [now, setNow] = createSignal(Date.now());
+setInterval(() => setNow(Date.now()), 1000);
+export {now};
 
 let seq = 0;
 const newId = () => `t${Date.now().toString(36)}-${(seq++).toString(36)}`;
@@ -146,17 +180,6 @@ export const tostiCount = (person: string) =>
 
 const queueIndexOf = (id: string) => state.queue.findIndex((t) => t.id === id);
 
-function refTosti(ref: DragRef): Tosti | null {
-  if (ref.from === "roster") {
-    return {id: newId(), person: ref.person, placedAt: null};
-  }
-  if (ref.from === "iron") {
-    return state.iron[ref.slot];
-  }
-  const i = queueIndexOf(ref.id);
-  return i < 0 ? null : state.queue[i];
-}
-
 export function canDrop(ref: DragRef, target: DropTarget): boolean {
   switch (target.kind) {
     case "iron": {
@@ -176,103 +199,127 @@ export function canDrop(ref: DragRef, target: DropTarget): boolean {
   }
 }
 
+/** each returns false when the tosti moved away underneath us mid-drag */
+function dropOnIron(ref: DragRef, slot: number): boolean {
+  if (ref.from === "iron") {
+    setState(
+      produce((s) => {
+        const moving = s.iron[ref.slot];
+        s.iron[ref.slot] = s.iron[slot];
+        s.iron[slot] = moving;
+      }),
+    );
+    return true;
+  }
+
+  if (ref.from === "queue") {
+    const i = queueIndexOf(ref.id);
+    if (i < 0) {
+      return false;
+    }
+    setState(
+      produce((s) => {
+        const moving = s.queue[i];
+        const occupant = s.iron[slot];
+        if (occupant) {
+          s.queue[i] = requeued(occupant);
+        } else {
+          s.queue.splice(i, 1);
+        }
+        s.iron[slot] = {...moving, placedAt: Date.now()};
+      }),
+    );
+    return true;
+  }
+
+  // whatever is left comes from the roster: a brand new tosti
+  setState(
+    produce((s) => {
+      s.iron[slot] = {id: newId(), person: ref.person, placedAt: Date.now()};
+    }),
+  );
+  return true;
+}
+
+function dropInQueue(ref: DragRef, at: number): boolean {
+  const index = Math.min(at, state.queue.length);
+
+  if (ref.from === "queue") {
+    const i = queueIndexOf(ref.id);
+    if (i < 0) {
+      return false;
+    }
+    setState(
+      produce((s) => {
+        const [moving] = s.queue.splice(i, 1);
+        s.queue.splice(i < index ? index - 1 : index, 0, moving);
+      }),
+    );
+    return true;
+  }
+
+  if (ref.from === "iron") {
+    const moving = state.iron[ref.slot];
+    if (!moving) {
+      return false;
+    }
+    setState(
+      produce((s) => {
+        s.iron[ref.slot] = null;
+        s.queue.splice(index, 0, requeued(moving));
+      }),
+    );
+    return true;
+  }
+
+  setState(
+    produce((s) => {
+      s.queue.splice(index, 0, {
+        id: newId(),
+        person: ref.person,
+        placedAt: null,
+      });
+    }),
+  );
+  return true;
+}
+
+/** a roster drag never reaches the plate: there is nothing to eat yet */
+function dropOnPlate(ref: Exclude<DragRef, {from: "roster"}>): boolean {
+  const i = ref.from === "queue" ? queueIndexOf(ref.id) : -1;
+  const moving = ref.from === "iron" ? state.iron[ref.slot] : state.queue[i];
+  if (!moving) {
+    return false;
+  }
+
+  const {person} = moving;
+  setState(
+    produce((s) => {
+      if (ref.from === "iron") {
+        s.iron[ref.slot] = null;
+      } else {
+        s.queue.splice(i, 1);
+      }
+      s.served += 1;
+      s.eaten[person] = (s.eaten[person] ?? 0) + 1;
+    }),
+  );
+  return true;
+}
+
 export function drop(ref: DragRef, target: DropTarget) {
   if (!canDrop(ref, target)) {
     return false;
   }
 
-  if (target.kind === "iron") {
-    const slot = target.slot;
-    if (ref.from === "iron") {
-      setState(
-        produce((s) => {
-          const moving = s.iron[ref.slot];
-          s.iron[ref.slot] = s.iron[slot];
-          s.iron[slot] = moving;
-        }),
-      );
-    } else if (ref.from === "queue") {
-      const i = queueIndexOf(ref.id);
-      if (i < 0) {
-        return false;
-      }
-      setState(
-        produce((s) => {
-          const moving = s.queue[i];
-          const occupant = s.iron[slot];
-          if (occupant) {
-            s.queue[i] = requeued(occupant);
-          } else {
-            s.queue.splice(i, 1);
-          }
-          s.iron[slot] = {...moving, placedAt: Date.now()};
-        }),
-      );
-    } else {
-      const fresh = refTosti(ref);
-      if (!fresh) {
-        return false;
-      }
-      setState(
-        produce((s) => {
-          s.iron[slot] = {...fresh, placedAt: Date.now()};
-        }),
-      );
-    }
-  } else if (target.kind === "queue") {
-    const index = Math.min(target.index, state.queue.length);
-    if (ref.from === "queue") {
-      const i = queueIndexOf(ref.id);
-      if (i < 0) {
-        return false;
-      }
-      setState(
-        produce((s) => {
-          const [moving] = s.queue.splice(i, 1);
-          s.queue.splice(i < index ? index - 1 : index, 0, moving);
-        }),
-      );
-    } else if (ref.from === "iron") {
-      const moving = state.iron[ref.slot];
-      if (!moving) {
-        return false;
-      }
-      setState(
-        produce((s) => {
-          s.iron[ref.slot] = null;
-          s.queue.splice(index, 0, requeued(moving));
-        }),
-      );
-    } else {
-      const fresh = refTosti(ref);
-      if (!fresh) {
-        return false;
-      }
-      setState(
-        produce((s) => {
-          s.queue.splice(index, 0, fresh);
-        }),
-      );
-    }
-  } else {
-    const moving = refTosti(ref);
-    if (!moving) {
-      return false;
-    }
-    const person = moving.person;
-    setState(
-      produce((s) => {
-        if (ref.from === "iron") {
-          s.iron[ref.slot] = null;
-        } else if (ref.from === "queue") {
-          s.queue.splice(queueIndexOf(ref.id), 1);
-        }
-        s.served += 1;
-        s.eaten[person] = (s.eaten[person] ?? 0) + 1;
-      }),
-    );
-  }
+  const moved =
+    target.kind === "iron" ? dropOnIron(ref, target.slot)
+    : target.kind === "queue" ? dropInQueue(ref, target.index)
+    : ref.from !== "roster" && dropOnPlate(ref);
 
+  if (!moved) {
+    return false;
+  }
   save();
   return true;
 }

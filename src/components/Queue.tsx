@@ -6,7 +6,7 @@ import {t} from "../store/i18n";
 import {cancel, drop, freeSlot, state} from "../store/store";
 import {colorOf} from "../store/tosti";
 
-import {TostiSvg} from "./TostiSvg";
+import {TostiSvg} from "./tosti/TostiSvg";
 
 const card =
   "flex min-h-[5.5rem] w-[6.75rem] flex-none flex-col items-center justify-center rounded-2xl p-2 transition";

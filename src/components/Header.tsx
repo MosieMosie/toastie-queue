@@ -2,11 +2,11 @@ import {toast} from "../effects/toast";
 import {lang, setLang, t} from "../store/i18n";
 import {clearAll, fillIron, freeSlot, state} from "../store/store";
 
-import {setConfigOpen} from "./ConfigModal";
-import {setPeopleOpen} from "./PeopleModal";
-import {setScoreboardOpen} from "./Scoreboard";
-import {TostiSvg} from "./TostiSvg";
-import {btnPrimary, btnSecondary} from "./ui";
+import {btnPrimary, btnSecondary} from "./buttons";
+import {setConfigOpen} from "./modals/ConfigModal";
+import {setPeopleOpen} from "./modals/PeopleModal";
+import {setScoreboardOpen} from "./modals/Scoreboard";
+import {TostiSvg} from "./tosti/TostiSvg";
 
 function shiftUp() {
   const moved = fillIron();

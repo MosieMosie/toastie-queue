@@ -1,6 +1,5 @@
 import {JSX} from "solid-js";
 
-/** every face stays inside the same patch of the triangle (x 20-45, y 31-47) */
 export const FACES = [
   "happy",
   "content",

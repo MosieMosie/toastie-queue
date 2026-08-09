@@ -1,37 +1,35 @@
 import {createEffect, createRoot} from "solid-js";
 
 import {now, state} from "../store/store";
-import {GRILL_SECONDS} from "../store/tosti";
+import {statusOf} from "../store/tosti";
 
 import {playReadyChime} from "./sound";
 
 /**
- * Rings the chime the moment a tosti crosses GRILL_SECONDS on the iron.
- * Each tosti chimes once; a page load with an already-ready tosti stays
- * silent instead of re-announcing old news.
+ * Rings the chime the moment a tosti reaches its eater's grill time. Each tosti
+ * chimes once; a page load with an already-ready tosti stays silent instead of
+ * re-announcing old news.
  */
 createRoot(() => {
   const announced = new Set<string>();
   let firstRun = true;
 
   createEffect(() => {
-    const t = now();
-    const ready = state.iron.filter(
-      (tosti) =>
-        tosti !== null &&
-        tosti.placedAt !== null &&
-        (t - tosti.placedAt) / 1000 >= GRILL_SECONDS,
-    ) as {id: string}[];
+    const at = now();
+    const ready = new Set(
+      state.iron.flatMap((tosti) =>
+        tosti && statusOf(tosti, at) !== "grilling" ? [tosti.id] : [],
+      ),
+    );
 
-    // forget tostis that left the iron so the set cannot grow forever
-    const readyIds = new Set(ready.map((r) => r.id));
+    // a tosti taken off the iron is forgotten, so a reused id can chime again
     for (const id of announced) {
-      if (!readyIds.has(id)) {
+      if (!ready.has(id)) {
         announced.delete(id);
       }
     }
 
-    for (const {id} of ready) {
+    for (const id of ready) {
       if (!announced.has(id)) {
         announced.add(id);
         if (!firstRun) {

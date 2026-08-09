@@ -3,7 +3,7 @@ import {Show} from "solid-js";
 import {dragging, dragLabel, dragPos} from "../effects/dnd";
 import {colorOf} from "../store/tosti";
 
-import {TostiSvg} from "./TostiSvg";
+import {TostiSvg} from "./tosti/TostiSvg";
 
 export function ToastiDragGhost() {
   return (

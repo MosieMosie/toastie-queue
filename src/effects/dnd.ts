@@ -6,6 +6,9 @@ import {canDrop, DragRef, drop, DropTarget} from "../store/store";
 import {toast} from "./toast";
 
 const DRAG_THRESHOLD = 8;
+const DOUBLE_TAP_MS = 350;
+// two taps of a finger land further apart than two clicks of a mouse
+const DOUBLE_TAP_SLOP = 24;
 
 const [dragging, setDragging] = createSignal<DragRef | null>(null);
 const [dragLabel, setDragLabel] = createSignal("");
@@ -39,23 +42,45 @@ function reset() {
 
 /**
  * Pointer-based dragging, so finger and mouse take the same code path. The
- * native HTML5 drag events are not usable here: they never fire for touch, and
- * this thing lives on a touchscreen in the kitchen.
+ * native HTML5 drag events are not an option: they never fire for touch, and
+ * the primary device is a touchscreen.
  *
  * Callers must add `touch-none select-none` to the element, otherwise the
  * browser scrolls the page instead of handing us the move events.
+ *
+ * A single tap fires straight away rather than waiting out the double-tap
+ * window, so an element passing both onTap and onDoubleTap gets onTap twice.
  */
 export function draggable(opts: {
   ref: () => DragRef;
   label: () => string;
   onTap?: () => void;
+  onDoubleTap?: () => void;
 }) {
+  let lastTap = {at: 0, x: 0, y: 0};
+
+  function tapped(ev: PointerEvent) {
+    const at = Date.now();
+    const quick = at - lastTap.at < DOUBLE_TAP_MS;
+    const close =
+      Math.hypot(ev.clientX - lastTap.x, ev.clientY - lastTap.y) <
+      DOUBLE_TAP_SLOP;
+
+    if (opts.onDoubleTap && quick && close) {
+      // a third tap starts a fresh pair instead of firing again
+      lastTap = {at: 0, x: 0, y: 0};
+      opts.onDoubleTap();
+      return;
+    }
+    lastTap = {at, x: ev.clientX, y: ev.clientY};
+    opts.onTap?.();
+  }
+
   const onPointerDown = (e: PointerEvent) => {
     if (e.pointerType === "mouse" && e.button !== 0) {
       return;
     }
-    // a press on a button inside the card belongs to that button, not to us:
-    // otherwise tapping ✕ would also fire the card's own onTap
+    // a press on a button inside the card belongs to that button
     if ((e.target as HTMLElement | null)?.closest?.("button")) {
       return;
     }
@@ -89,7 +114,7 @@ export function draggable(opts: {
       }
       detach();
       if (!started) {
-        opts.onTap?.();
+        tapped(ev);
       } else {
         const target = targetAt(ev.clientX, ev.clientY);
         const ref = dragging();
@@ -123,7 +148,6 @@ export function draggable(opts: {
 
   return {
     onPointerDown,
-    // a long press on touch otherwise pops the context menu mid-drag
     onContextMenu: (e: MouseEvent) => e.preventDefault(),
   };
 }

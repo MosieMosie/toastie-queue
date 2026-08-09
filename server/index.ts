@@ -1,4 +1,3 @@
-/** Production server: serves dist/ plus the API. Plain Node 24+, no deps. */
 import {createReadStream, statSync} from "node:fs";
 import http from "node:http";
 import path from "node:path";

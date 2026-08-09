@@ -1,13 +1,13 @@
 import {createMemo, createSignal, For, Show} from "solid-js";
 
-import {t} from "../store/i18n";
-import {state} from "../store/store";
-import {colorOf} from "../store/tosti";
+import {t} from "../../store/i18n";
+import {state} from "../../store/store";
+import {colorOf} from "../../store/tosti";
+import {Avatar} from "../Avatar";
+import {TostiSvg} from "../tosti/TostiSvg";
 
-import {TostiSvg} from "./TostiSvg";
-import {Avatar, Modal} from "./ui";
+import {Modal} from "./Modal";
 
-// module-level so the header button in App.tsx can drive it
 export const [scoreboardOpen, setScoreboardOpen] = createSignal(false);
 
 function EmptyScoreboard() {

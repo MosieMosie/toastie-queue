@@ -1,112 +1,61 @@
 /**
- * The whole backend: SQLite (built into Node, zero dependencies) holding the
- * people and the iron/queue state, a few JSON endpoints, and an SSE stream so
- * every open screen stays in sync. Mounted as Vite middleware in dev
- * (vite.config.ts) and used by server/index.ts in production.
+ * The JSON API. Reads and writes go through db.ts; every change is published
+ * on the SSE stream (events.ts) so the other screens follow along. Mounted as
+ * Vite middleware in dev (vite.config.ts) and by server/index.ts in production.
  */
-import {mkdirSync} from "node:fs";
 import type {IncomingMessage, ServerResponse} from "node:http";
-import path from "node:path";
-import {DatabaseSync} from "node:sqlite";
 
 import {
-  emptyState,
+  clampGrill,
+  DEFAULT_GRILL_SECONDS,
   NAME_MAX,
   type Person,
   renamePersonInState,
   sanitizeState,
-  type State,
 } from "../shared/state.ts";
 
-const STATE_KEY = "state-v1";
+import * as db from "./db.ts";
+import {publish, subscribe} from "./events.ts";
+
 const COLOR_RE = /^#[0-9a-f]{6}$/iu;
 
-const dataDir = process.env.TOSTI_DATA_DIR ?? path.join(process.cwd(), "data");
-mkdirSync(dataDir, {recursive: true});
+type PersonError = "invalid-name" | "invalid-color" | "duplicate";
 
-const db = new DatabaseSync(path.join(dataDir, "tosti.db"));
-db.exec(`
-  CREATE TABLE IF NOT EXISTS people (
-    name  TEXT PRIMARY KEY,
-    color TEXT NOT NULL,
-    pos   INTEGER NOT NULL
-  ) STRICT;
-  CREATE TABLE IF NOT EXISTS kv (
-    key   TEXT PRIMARY KEY,
-    value TEXT NOT NULL
-  ) STRICT;
-`);
-
-const stmt = {
-  listPeople: db.prepare("SELECT name, color FROM people ORDER BY pos"),
-  getState: db.prepare("SELECT value FROM kv WHERE key = ?"),
-  saveState: db.prepare(
-    "INSERT INTO kv (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
-  ),
-  maxPos: db.prepare("SELECT COALESCE(MAX(pos), -1) AS m FROM people"),
-  insertPerson: db.prepare(
-    "INSERT INTO people (name, color, pos) VALUES (?, ?, ?)",
-  ),
-  updatePerson: db.prepare(
-    "UPDATE people SET name = ?, color = ? WHERE name = ?",
-  ),
-  deletePerson: db.prepare("DELETE FROM people WHERE name = ?"),
-};
-
-const listPeople = (): Person[] => stmt.listPeople.all() as unknown as Person[];
-
-function loadState(): State {
-  const row = stmt.getState.get(STATE_KEY) as {value: string} | undefined;
-  if (!row) {
-    return emptyState();
-  }
-  try {
-    return sanitizeState(JSON.parse(row.value)) ?? emptyState();
-  } catch {
-    return emptyState();
-  }
+/**
+ * Every field is optional in a request: on a PATCH whatever is missing stays as
+ * it was, on a POST it falls back to a blank person that validate() rejects.
+ */
+function personFrom(body: Record<string, unknown>, current?: Person): Person {
+  return {
+    name:
+      typeof body.name === "string" ? body.name.trim() : (current?.name ?? ""),
+    color: typeof body.color === "string" ? body.color : (current?.color ?? ""),
+    grillSeconds:
+      (
+        typeof body.grillSeconds === "number" &&
+        Number.isFinite(body.grillSeconds)
+      ) ?
+        clampGrill(body.grillSeconds)
+      : (current?.grillSeconds ?? DEFAULT_GRILL_SECONDS),
+  };
 }
 
-function validatePerson(
-  name: string,
-  color: string,
-  everyone: Person[],
-  excludeName?: string,
-): "invalid-name" | "invalid-color" | "duplicate" | null {
-  if (!name || name.length > NAME_MAX) {
+function validate(person: Person, replacing?: string): PersonError | null {
+  if (!person.name || person.name.length > NAME_MAX) {
     return "invalid-name";
   }
-  if (!COLOR_RE.test(color)) {
+  if (!COLOR_RE.test(person.color)) {
     return "invalid-color";
   }
-  const taken = everyone.some(
-    (p) =>
-      p.name !== excludeName && p.name.toLowerCase() === name.toLowerCase(),
-  );
+  const taken = db
+    .listPeople()
+    .some(
+      (p) =>
+        p.name !== replacing &&
+        p.name.toLowerCase() === person.name.toLowerCase(),
+    );
   return taken ? "duplicate" : null;
 }
-
-interface Client {
-  id: string;
-  res: ServerResponse;
-}
-const clients = new Set<Client>();
-
-function broadcast(event: string, data: string, exceptClientId?: string) {
-  const frame = `event: ${event}\ndata: ${data}\n\n`;
-  for (const c of clients) {
-    if (c.id !== exceptClientId) {
-      c.res.write(frame);
-    }
-  }
-}
-
-// keep idle SSE connections from being closed by proxies/browsers
-setInterval(() => {
-  for (const c of clients) {
-    c.res.write(": ping\n\n");
-  }
-}, 25_000).unref();
 
 function json(res: ServerResponse, status: number, body: unknown) {
   res.writeHead(status, {
@@ -116,7 +65,14 @@ function json(res: ServerResponse, status: number, body: unknown) {
   res.end(JSON.stringify(body));
 }
 
-async function readBody(req: IncomingMessage): Promise<unknown> {
+const ok = (res: ServerResponse) => json(res, 200, {ok: true});
+
+const fail = (res: ServerResponse, error: PersonError | "invalid-state") =>
+  json(res, error === "duplicate" ? 409 : 400, {error});
+
+async function readBody(
+  req: IncomingMessage,
+): Promise<Record<string, unknown>> {
   let raw = "";
   for await (const chunk of req) {
     raw += chunk;
@@ -124,105 +80,123 @@ async function readBody(req: IncomingMessage): Promise<unknown> {
       throw new Error("body too large");
     }
   }
-  return JSON.parse(raw);
+  return JSON.parse(raw) as Record<string, unknown>;
 }
 
-async function route(req: IncomingMessage, res: ServerResponse, url: URL) {
-  if (req.method === "GET" && url.pathname === "/api/sync") {
-    return json(res, 200, {people: listPeople(), state: loadState()});
-  }
-
-  if (req.method === "GET" && url.pathname === "/api/events") {
-    const client: Client = {id: url.searchParams.get("client") ?? "", res};
-    res.writeHead(200, {
-      "content-type": "text/event-stream",
-      "cache-control": "no-store",
-      "connection": "keep-alive",
-    });
-    res.write(": hi\n\n");
-    clients.add(client);
-    req.on("close", () => clients.delete(client));
-    return;
-  }
-
-  if (req.method === "PUT" && url.pathname === "/api/state") {
-    const state = sanitizeState(await readBody(req));
-    if (!state) {
-      return json(res, 400, {error: "invalid-state"});
-    }
-    const payload = JSON.stringify(state);
-    stmt.saveState.run(STATE_KEY, payload);
-    // the sender already has this state applied locally
-    broadcast(
-      "state",
-      payload,
-      req.headers["x-client-id"] as string | undefined,
-    );
-    return json(res, 200, {ok: true});
-  }
-
-  if (req.method === "POST" && url.pathname === "/api/people") {
-    const body = (await readBody(req)) as Record<string, unknown>;
-    const name = typeof body.name === "string" ? body.name.trim() : "";
-    const color = typeof body.color === "string" ? body.color : "";
-    const invalid = validatePerson(name, color, listPeople());
-    if (invalid) {
-      return json(res, invalid === "duplicate" ? 409 : 400, {error: invalid});
-    }
-    const maxPos = (stmt.maxPos.get() as {m: number}).m;
-    stmt.insertPerson.run(name, color, maxPos + 1);
-    broadcast("people", JSON.stringify(listPeople()));
-    return json(res, 200, {ok: true});
-  }
-
-  if (req.method === "PATCH" && url.pathname.startsWith("/api/people/")) {
-    const oldName = decodeURIComponent(
-      url.pathname.slice("/api/people/".length),
-    );
-    const everyone = listPeople();
-    const person = everyone.find((p) => p.name === oldName);
-    if (!person) {
-      return json(res, 404, {error: "not-found"});
-    }
-    const body = (await readBody(req)) as Record<string, unknown>;
-    const name = typeof body.name === "string" ? body.name.trim() : person.name;
-    const color = typeof body.color === "string" ? body.color : person.color;
-    const invalid = validatePerson(name, color, everyone, oldName);
-    if (invalid) {
-      return json(res, invalid === "duplicate" ? 409 : 400, {error: invalid});
-    }
-    stmt.updatePerson.run(name, color, oldName);
-    if (name !== oldName) {
-      const state = loadState();
-      renamePersonInState(state, oldName, name);
-      const payload = JSON.stringify(state);
-      stmt.saveState.run(STATE_KEY, payload);
-      broadcast("state", payload);
-    }
-    broadcast("people", JSON.stringify(listPeople()));
-    return json(res, 200, {ok: true});
-  }
-
-  if (req.method === "DELETE" && url.pathname.startsWith("/api/people/")) {
-    const name = decodeURIComponent(url.pathname.slice("/api/people/".length));
-    stmt.deletePerson.run(name);
-    broadcast("people", JSON.stringify(listPeople()));
-    return json(res, 200, {ok: true});
-  }
-
-  json(res, 404, {error: "not-found"});
+interface Request {
+  req: IncomingMessage;
+  res: ServerResponse;
+  url: URL;
+  /** the `:name` segment, already decoded; empty for routes without one */
+  param: string;
 }
 
+type Handler = (request: Request) => Promise<void> | void;
+
+const getSync: Handler = ({res}) =>
+  json(res, 200, {people: db.listPeople(), state: db.loadState()});
+
+const getEvents: Handler = ({req, res, url}) => {
+  const unsubscribe = subscribe(url.searchParams.get("client") ?? "", res);
+  req.on("close", unsubscribe);
+};
+
+const putState: Handler = async ({req, res}) => {
+  const state = sanitizeState(await readBody(req));
+  if (!state) {
+    return fail(res, "invalid-state");
+  }
+  db.saveState(state);
+  // the sender already has this state applied locally
+  publish("state", state, req.headers["x-client-id"] as string | undefined);
+  ok(res);
+};
+
+const postPerson: Handler = async ({req, res}) => {
+  const person = personFrom(await readBody(req));
+  const invalid = validate(person);
+  if (invalid) {
+    return fail(res, invalid);
+  }
+  db.insertPerson(person);
+  publish("people", db.listPeople());
+  ok(res);
+};
+
+const patchPerson: Handler = async ({req, res, param}) => {
+  const current = db.findPerson(param);
+  if (!current) {
+    return json(res, 404, {error: "not-found"});
+  }
+  const person = personFrom(await readBody(req), current);
+  const invalid = validate(person, param);
+  if (invalid) {
+    return fail(res, invalid);
+  }
+  db.updatePerson(param, person);
+  if (person.name !== param) {
+    // tostis on the iron and the eaten tally are keyed by name
+    const state = db.loadState();
+    renamePersonInState(state, param, person.name);
+    db.saveState(state);
+    publish("state", state);
+  }
+  publish("people", db.listPeople());
+  ok(res);
+};
+
+const deletePerson: Handler = ({res, param}) => {
+  db.deletePerson(param);
+  publish("people", db.listPeople());
+  ok(res);
+};
+
+const ROUTES: [method: string, path: string, handle: Handler][] = [
+  ["GET", "/api/sync", getSync],
+  ["GET", "/api/events", getEvents],
+  ["PUT", "/api/state", putState],
+  ["POST", "/api/people", postPerson],
+  ["PATCH", "/api/people/:name", patchPerson],
+  ["DELETE", "/api/people/:name", deletePerson],
+];
+
+/**
+ * Matches one route path against a request path: returns the decoded `:name`
+ * segment, "" for a path without one, or null when it is not this route.
+ */
+function paramOf(path: string, pathname: string): string | null {
+  const [base, param] = path.split("/:");
+  if (param === undefined) {
+    return path === pathname ? "" : null;
+  }
+  const prefix = `${base}/`;
+  if (!pathname.startsWith(prefix)) {
+    return null;
+  }
+  return decodeURIComponent(pathname.slice(prefix.length)) || null;
+}
+
+/** returns false for anything that is not an API request, so the caller serves it */
 export function handleApi(req: IncomingMessage, res: ServerResponse): boolean {
   if (!req.url?.startsWith("/api/")) {
     return false;
   }
-  route(req, res, new URL(req.url, "http://local")).catch(() => {
-    if (!res.headersSent) {
-      json(res, 400, {error: "bad-request"});
-    } else {
-      res.end();
+
+  const url = new URL(req.url, "http://local");
+  for (const [method, path, handle] of ROUTES) {
+    const param = method === req.method ? paramOf(path, url.pathname) : null;
+    if (param !== null) {
+      Promise.resolve(handle({req, res, url, param})).catch(() => {
+        if (!res.headersSent) {
+          json(res, 400, {error: "bad-request"});
+        } else {
+          res.end();
+        }
+      });
+      return true;
     }
-  });
+  }
+
+  json(res, 404, {error: "not-found"});
   return true;
 }

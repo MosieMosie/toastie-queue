@@ -1,12 +1,6 @@
-/**
- * Synthesized chime for when a tosti is done — no audio assets to ship.
- *
- * Browsers refuse to start audio before a user gesture, so the context is
- * unlocked by the first tap/keypress. On the kiosk someone always taps to add
- * a tosti before one can possibly be ready, so in practice this never blocks.
- */
 let ctx: AudioContext | null = null;
 
+// browsers only allow audio after a user gesture, so the first one arms it
 const unlock = () => {
   ctx ??= new AudioContext();
   if (ctx.state === "suspended") {
@@ -16,7 +10,6 @@ const unlock = () => {
 window.addEventListener("pointerdown", unlock);
 window.addEventListener("keydown", unlock);
 
-/** one bell strike: a sine with a fast attack, long ring-out, and a faint octave overtone */
 function ding(c: AudioContext, at: number, freq: number, gain = 0.35) {
   for (const [mult, level] of [
     [1, gain],
@@ -35,7 +28,7 @@ function ding(c: AudioContext, at: number, freq: number, gain = 0.35) {
   }
 }
 
-/** ding-dong: B5 then E6, like a kitchen timer with better manners */
+/** a two-note ding-dong: B5 followed by E6 */
 export function playReadyChime() {
   if (!ctx || ctx.state !== "running") {
     return;

@@ -18,15 +18,24 @@ Names, colors and per-person eaten counts are managed in the app (Edit and Score
 buttons). Renames keep tostis and scores, deletes don't. UI is EN/NL, strings in
 `src/store/i18n.ts`.
 
-The UI targets a 13.3" touchscreen: pointer-event dragging (`src/lib/dnd.ts`, the HTML5
-drag API never fires on touch), no hover, finger-sized targets, an on-screen keyboard on
-touch-only devices. Fits 1280x720 without scrolling.
+The UI targets a 13.3" touchscreen: pointer-event dragging (`src/effects/dnd.ts`, the
+HTML5 drag API never fires on touch), no hover, finger-sized targets, an on-screen
+keyboard on touch-only devices. Fits 1280x720 without scrolling.
+
+## Layout
+
+- `shared/` — types, limits and sanitising used by both sides
+- `server/` — HTTP API, SQLite access, SSE broadcast
+- `src/store/` — client state (`store.ts`), derived tosti logic (`tosti.ts`), strings (`i18n.ts`)
+- `src/effects/` — dragging, toasts, the ready chime
+- `src/components/` — grouped per area: `iron/`, `people/`, `tosti/`, `modals/`
 
 ## Tweaking
 
-- `GRILL_SECONDS`, `BURNT_SECONDS`, `PALETTE`: `src/store/tosti.ts`
-- `IRON_SLOTS`, `NAME_MAX`: `shared/state.ts`
-- faces and the tosti drawing: `src/components/faces.tsx`, `TostiSvg.tsx`
+- grill times (`MIN`/`MAX`/`DEFAULT_GRILL_SECONDS`, `BURNT_FACTOR`), slot count
+  (`MIN`/`MAX`/`DEFAULT_IRON_SLOTS`) and `NAME_MAX`: `shared/state.ts`
+- `PALETTE`: `src/store/tosti.ts`
+- faces and the tosti drawing: `src/components/tosti/faces.tsx`, `TostiSvg.tsx`
 
 ## Deploy
 
