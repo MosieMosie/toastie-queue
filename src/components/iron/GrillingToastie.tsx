@@ -59,12 +59,12 @@ function CancelButton(props: {person: string; onCancel: () => void}) {
 
 export function GrillingToastie(props: {slot: number; toastie: Toastie}) {
   const status = () => statusOf(props.toastie, now());
-  // slightly ahead of the timer, so it already looks golden when it is ready
   const browning = () => grillProgress(props.toastie, now()) * 1.15;
 
   const takeOff = () => {
+    const name = props.toastie.person;
     if (drop({from: "iron", slot: props.slot}, {kind: "plate"})) {
-      toast(t("toast.enjoy", {name: props.toastie.person}));
+      toast(t("toast.enjoy", {name}));
     }
   };
 
