@@ -10,11 +10,20 @@ export interface Toastie {
   placedAt: number | null;
 }
 
+export interface GrillStats {
+  samples: number;
+  totalSeconds: number;
+  fastestSeconds: number;
+  slowestSeconds: number;
+  burnt: number;
+}
+
 export interface State {
   iron: (Toastie | null)[];
   queue: Toastie[];
   served: number;
   eaten: Record<string, number>;
+  grillStats: Record<string, GrillStats>;
 }
 
 export const MIN_IRON_SLOTS = 1;
@@ -45,6 +54,7 @@ export const emptyState = (): State => ({
   queue: [],
   served: 0,
   eaten: {},
+  grillStats: {},
 });
 
 export function renamePersonInState(
@@ -62,6 +72,28 @@ export function renamePersonInState(
     state.eaten[newName] = (state.eaten[newName] ?? 0) + state.eaten[oldName];
     delete state.eaten[oldName];
   }
+
+  const oldStats = state.grillStats[oldName];
+  if (oldStats) {
+    const current = state.grillStats[newName];
+    state.grillStats[newName] =
+      current ?
+        {
+          samples: current.samples + oldStats.samples,
+          totalSeconds: current.totalSeconds + oldStats.totalSeconds,
+          fastestSeconds: Math.min(
+            current.fastestSeconds,
+            oldStats.fastestSeconds,
+          ),
+          slowestSeconds: Math.max(
+            current.slowestSeconds,
+            oldStats.slowestSeconds,
+          ),
+          burnt: current.burnt + oldStats.burnt,
+        }
+      : oldStats;
+    delete state.grillStats[oldName];
+  }
 }
 
 function isToastie(value: unknown): value is Toastie {
@@ -72,7 +104,10 @@ function isToastie(value: unknown): value is Toastie {
   return (
     typeof t.id === "string" &&
     typeof t.person === "string" &&
-    (t.placedAt === null || typeof t.placedAt === "number")
+    (t.placedAt === null ||
+      (typeof t.placedAt === "number" &&
+        Number.isFinite(t.placedAt) &&
+        t.placedAt > 0))
   );
 }
 
@@ -89,6 +124,42 @@ function sanitizeEaten(value: unknown): Record<string, number> {
   }
 
   return eaten;
+}
+
+function sanitizeGrillStats(value: unknown): Record<string, GrillStats> {
+  if (!value || typeof value !== "object") {
+    return {};
+  }
+
+  const result: Record<string, GrillStats> = {};
+  for (const [name, raw] of Object.entries(value)) {
+    if (raw && typeof raw === "object") {
+      const stats = raw as Record<string, unknown>;
+      const samples = finiteNonNegative(stats.samples);
+      const totalSeconds = finiteNonNegative(stats.totalSeconds);
+      const fastestSeconds = finiteNonNegative(stats.fastestSeconds);
+      const slowestSeconds = finiteNonNegative(stats.slowestSeconds);
+      const burnt = Math.min(samples, finiteNonNegative(stats.burnt));
+
+      if (samples > 0) {
+        result[name] = {
+          samples,
+          totalSeconds,
+          fastestSeconds,
+          slowestSeconds,
+          burnt,
+        };
+      }
+    }
+  }
+
+  return result;
+}
+
+function finiteNonNegative(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value) ?
+      Math.max(0, Math.floor(value))
+    : 0;
 }
 
 export function sanitizeState(value: unknown): State | null {
@@ -115,5 +186,6 @@ export function sanitizeState(value: unknown): State | null {
         Math.max(0, Math.floor(s.served))
       : 0,
     eaten: sanitizeEaten(s.eaten),
+    grillStats: sanitizeGrillStats(s.grillStats),
   };
 }

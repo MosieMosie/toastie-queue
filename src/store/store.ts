@@ -7,9 +7,15 @@
 import {createSignal} from "solid-js";
 import {createStore, produce, reconcile} from "solid-js/store";
 
-import {clampSlots, emptyState, sanitizeState, State} from "../../shared/state";
+import {
+  BURNT_FACTOR,
+  clampSlots,
+  emptyState,
+  sanitizeState,
+  State,
+} from "../../shared/state";
 
-import {Person, setPeople, Toastie} from "./toastie";
+import {grillSecondsOf, Person, setPeople, Toastie} from "./toastie";
 
 export type DragRef =
   | {from: "roster"; person: string}
@@ -96,7 +102,7 @@ async function personRequest(
 export const addPerson = (name: string, color: string, grillSeconds: number) =>
   personRequest("/api/people", "POST", {name, color, grillSeconds});
 
-/** the server carries the person's toasties and eaten tally over */
+/** the server carries the person's toasties, eaten tally and grill stats over */
 export function renamePerson(oldName: string, name: string, color: string) {
   // an unsaved slider change still belongs to the old name
   flushGrill(oldName);
@@ -285,7 +291,10 @@ function dropInQueue(ref: DragRef, at: number): boolean {
 }
 
 /** a roster drag never reaches the plate: there is nothing to eat yet */
-function dropOnPlate(ref: Exclude<DragRef, {from: "roster"}>): boolean {
+function dropOnPlate(
+  ref: Exclude<DragRef, {from: "roster"}>,
+  completedAt: number,
+): boolean {
   const i = ref.from === "queue" ? queueIndexOf(ref.id) : -1;
   const moving = ref.from === "iron" ? state.iron[ref.slot] : state.queue[i];
   if (!moving) {
@@ -293,6 +302,10 @@ function dropOnPlate(ref: Exclude<DragRef, {from: "roster"}>): boolean {
   }
 
   const {person} = moving;
+  const grillSeconds =
+    moving.placedAt === null ?
+      null
+    : Math.max(0, Math.round((completedAt - moving.placedAt) / 1000));
   setState(
     produce((s) => {
       if (ref.from === "iron") {
@@ -302,12 +315,57 @@ function dropOnPlate(ref: Exclude<DragRef, {from: "roster"}>): boolean {
       }
       s.served += 1;
       s.eaten[person] = (s.eaten[person] ?? 0) + 1;
+
+      if (grillSeconds !== null) {
+        const previous = s.grillStats[person];
+        const burnt = grillSeconds >= grillSecondsOf(person) * BURNT_FACTOR;
+        s.grillStats[person] = {
+          samples: (previous?.samples ?? 0) + 1,
+          totalSeconds: (previous?.totalSeconds ?? 0) + grillSeconds,
+          fastestSeconds: Math.min(
+            previous?.fastestSeconds ?? grillSeconds,
+            grillSeconds,
+          ),
+          slowestSeconds: Math.max(
+            previous?.slowestSeconds ?? grillSeconds,
+            grillSeconds,
+          ),
+          burnt: (previous?.burnt ?? 0) + (burnt ? 1 : 0),
+        };
+      }
     }),
   );
   return true;
 }
 
-export function drop(ref: DragRef, target: DropTarget) {
+export function setEatenCount(person: string, count: number) {
+  if (!Number.isFinite(count)) {
+    return;
+  }
+  const next = Math.max(0, Math.min(9999, Math.floor(count)));
+  const previous = state.eaten[person] ?? 0;
+  if (next === previous) {
+    return;
+  }
+
+  setState(
+    produce((s) => {
+      if (next === 0) {
+        delete s.eaten[person];
+      } else {
+        s.eaten[person] = next;
+      }
+      s.served = Math.max(0, s.served + next - previous);
+    }),
+  );
+  save();
+}
+
+export function drop(
+  ref: DragRef,
+  target: DropTarget,
+  completedAt = Date.now(),
+) {
   if (!canDrop(ref, target)) {
     return false;
   }
@@ -315,7 +373,7 @@ export function drop(ref: DragRef, target: DropTarget) {
   const moved =
     target.kind === "iron" ? dropOnIron(ref, target.slot)
     : target.kind === "queue" ? dropInQueue(ref, target.index)
-    : ref.from !== "roster" && dropOnPlate(ref);
+    : ref.from !== "roster" && dropOnPlate(ref, completedAt);
 
   if (!moved) {
     return false;

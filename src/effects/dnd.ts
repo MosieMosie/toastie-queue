@@ -1,8 +1,9 @@
 import {createSignal} from "solid-js";
 
 import {t} from "../store/i18n";
-import {canDrop, DragRef, drop, DropTarget} from "../store/store";
+import {canDrop, DragRef, drop, DropTarget, state} from "../store/store";
 
+import {openAdBreak} from "./ad";
 import {toast} from "./toast";
 
 const DRAG_THRESHOLD = 8;
@@ -118,9 +119,19 @@ export function draggable(opts: {
       } else {
         const target = targetAt(ev.clientX, ev.clientY);
         const ref = dragging();
-        if (target && ref && canDrop(ref, target) && drop(ref, target)) {
+        const plateToastie =
+          target?.kind === "plate" && ref?.from === "iron" ?
+            state.iron[ref.slot]
+          : null;
+        const adRequested = plateToastie ? openAdBreak(plateToastie) : false;
+        const moved =
+          target &&
+          ref &&
+          canDrop(ref, target) &&
+          (adRequested || drop(ref, target));
+        if (target && ref && moved) {
           const name = dragLabel();
-          if (target.kind === "plate") {
+          if (target.kind === "plate" && !adRequested) {
             toast(t("toast.enjoy", {name}));
           } else if (target.kind === "iron" && ref.from !== "iron") {
             toast(t("toast.onIron", {name}));

@@ -142,7 +142,7 @@ const patchPerson: Handler = async ({req, res, param}) => {
 
   db.updatePerson(param, person);
   if (person.name !== param) {
-    // toasties on the iron and the eaten tally are keyed by name
+    // active toasties, the eaten tally and grill stats are keyed by name
     const state = db.loadState();
     renamePersonInState(state, param, person.name);
     db.saveState(state);

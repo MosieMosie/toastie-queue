@@ -14,9 +14,9 @@ push changes with `PUT /api/state` and get everyone else's over SSE (`GET /api/e
 No accounts, last writer wins. In dev the API runs as Vite middleware; in production
 `server/index.ts` serves `dist/` plus the API. Node 24+, zero runtime dependencies.
 
-Names, colors and per-person eaten counts are managed in the app (Edit and Scoreboard
-buttons). Renames keep toasties and scores, deletes don't. UI is EN/NL, strings in
-`src/store/i18n.ts`.
+Names, colors, per-person eaten counts and measured grill stats are managed in the
+app (Edit and Scoreboard buttons). Renames keep toasties and scores, deletes don't.
+The UI, daily facts and fake ad breaks are available in EN/NL.
 
 The UI targets a 13.3" touchscreen: pointer-event dragging (`src/effects/dnd.ts`, the
 HTML5 drag API never fires on touch), no hover, finger-sized targets, an on-screen
@@ -36,6 +36,8 @@ keyboard on touch-only devices. Fits 1280x720 without scrolling.
   (`MIN`/`MAX`/`DEFAULT_IRON_SLOTS`) and `NAME_MAX`: `shared/state.ts`
 - `PALETTE`: `src/store/toastie.ts`
 - faces and the toastie drawing: `src/components/toastie/faces.tsx`, `ToastieSvg.tsx`
+- daily facts and fake ad copy: `src/components/ToastieFacts.tsx`,
+  `src/components/modals/AdBreak.tsx`
 
 ## Deploy
 
