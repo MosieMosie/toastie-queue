@@ -1,5 +1,6 @@
 import {Show} from "solid-js";
 
+import {openAdBreak} from "../../effects/ad";
 import {draggable} from "../../effects/dnd";
 import {toast} from "../../effects/toast";
 import {t} from "../../store/i18n";
@@ -62,6 +63,9 @@ export function GrillingToastie(props: {slot: number; toastie: Toastie}) {
   const browning = () => grillProgress(props.toastie, now()) * 1.15;
 
   const takeOff = () => {
+    if (openAdBreak(props.toastie)) {
+      return;
+    }
     const name = props.toastie.person;
     if (drop({from: "iron", slot: props.slot}, {kind: "plate"})) {
       toast(t("toast.enjoy", {name}));
