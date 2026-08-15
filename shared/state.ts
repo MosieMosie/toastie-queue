@@ -96,6 +96,15 @@ export function renamePersonInState(
   }
 }
 
+export function removePersonFromState(state: State, name: string) {
+  state.iron = state.iron.map((toastie) =>
+    toastie?.person === name ? null : toastie,
+  );
+  state.queue = state.queue.filter((toastie) => toastie.person !== name);
+  delete state.eaten[name];
+  delete state.grillStats[name];
+}
+
 function isToastie(value: unknown): value is Toastie {
   if (!value || typeof value !== "object") {
     return false;
@@ -137,8 +146,14 @@ function sanitizeGrillStats(value: unknown): Record<string, GrillStats> {
       const stats = raw as Record<string, unknown>;
       const samples = finiteNonNegative(stats.samples);
       const totalSeconds = finiteNonNegative(stats.totalSeconds);
-      const fastestSeconds = finiteNonNegative(stats.fastestSeconds);
-      const slowestSeconds = finiteNonNegative(stats.slowestSeconds);
+      const fastestSeconds = Math.min(
+        finiteNonNegative(stats.fastestSeconds),
+        finiteNonNegative(stats.slowestSeconds),
+      );
+      const slowestSeconds = Math.max(
+        finiteNonNegative(stats.fastestSeconds),
+        finiteNonNegative(stats.slowestSeconds),
+      );
       const burnt = Math.min(samples, finiteNonNegative(stats.burnt));
 
       if (samples > 0) {

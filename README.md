@@ -16,7 +16,8 @@ No accounts, last writer wins. In dev the API runs as Vite middleware; in produc
 
 Names, colors, per-person eaten counts and measured grill stats are managed in the
 app (Edit and Scoreboard buttons). Renames keep toasties and scores, deletes don't.
-The UI, daily facts and fake ad breaks are available in EN/NL.
+The UI, daily facts and fake ad breaks are available in EN/NL. Ad breaks can be
+turned off per device in the Set up modal or with `?ads=off` in the URL.
 
 The UI targets a 13.3" touchscreen: pointer-event dragging (`src/effects/dnd.ts`, the
 HTML5 drag API never fires on touch), no hover, finger-sized targets, an on-screen

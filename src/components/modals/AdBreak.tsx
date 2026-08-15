@@ -96,7 +96,7 @@ function hash(value: string) {
 
 export function AdBreak() {
   const [remaining, setRemaining] = createSignal(3);
-  const adIndex = () => hash(pendingAd()?.id ?? "") % ADS.en.length;
+  const adIndex = () => hash(pendingAd()?.id ?? "") % ADS[lang()].length;
   const ad = createMemo(() => ADS[lang()][adIndex()]);
 
   createEffect(() => {

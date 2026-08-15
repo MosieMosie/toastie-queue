@@ -1,5 +1,6 @@
 import {createSignal, For} from "solid-js";
 
+import {adsEnabled, setAdsEnabled} from "../../effects/ad";
 import {toast} from "../../effects/toast";
 import {t} from "../../store/i18n";
 import {ironSlots, setIronSlots} from "../../store/store";
@@ -87,6 +88,33 @@ export function ConfigModal() {
         </div>
         <p class="text-xs font-semibold text-amber-900/50">
           {t("config.slotsHint")}
+        </p>
+
+        <div class="mt-2 flex items-center justify-between gap-3">
+          <p class="text-sm font-semibold text-amber-900/70">
+            {t("config.ads")}
+          </p>
+          <div class="flex rounded-full bg-amber-50/60 p-1 ring-1 ring-amber-900/10">
+            <For each={[true, false]}>
+              {(value) => (
+                <button
+                  type="button"
+                  onClick={() => setAdsEnabled(value)}
+                  class="rounded-full px-4 py-1.5 text-sm font-bold transition active:scale-95"
+                  classList={{
+                    "bg-amber-900 text-amber-50 shadow-md":
+                      adsEnabled() === value,
+                    "text-amber-950": adsEnabled() !== value,
+                  }}
+                >
+                  {value ? t("config.adsOn") : t("config.adsOff")}
+                </button>
+              )}
+            </For>
+          </div>
+        </div>
+        <p class="text-xs font-semibold text-amber-900/50">
+          {t("config.adsHint")}
         </p>
       </div>
     </Modal>

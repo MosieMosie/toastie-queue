@@ -11,8 +11,25 @@ export interface PendingAd {
 
 export const [pendingAd, setPendingAd] = createSignal<PendingAd | null>(null);
 
+const ADS_KEY = "toastie-ads";
+
+const urlOverride = new URLSearchParams(location.search).get("ads");
+if (urlOverride === "on" || urlOverride === "off") {
+  localStorage.setItem(ADS_KEY, urlOverride);
+}
+
+const [adsEnabled, setAdsEnabledSignal] = createSignal(
+  localStorage.getItem(ADS_KEY) !== "off",
+);
+export {adsEnabled};
+
+export function setAdsEnabled(next: boolean) {
+  setAdsEnabledSignal(next);
+  localStorage.setItem(ADS_KEY, next ? "on" : "off");
+}
+
 export function openAdBreak(toastie: Toastie) {
-  if (toastie.placedAt === null) {
+  if (!adsEnabled() || toastie.placedAt === null) {
     return false;
   }
 

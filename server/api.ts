@@ -10,6 +10,7 @@ import {
   DEFAULT_GRILL_SECONDS,
   NAME_MAX,
   type Person,
+  removePersonFromState,
   renamePersonInState,
   sanitizeState,
 } from "../shared/state.ts";
@@ -155,6 +156,12 @@ const patchPerson: Handler = async ({req, res, param}) => {
 
 const deletePerson: Handler = ({res, param}) => {
   db.deletePerson(param);
+
+  const state = db.loadState();
+  removePersonFromState(state, param);
+  db.saveState(state);
+  publish("state", state);
+
   publish("people", db.listPeople());
   ok(res);
 };

@@ -71,6 +71,11 @@ const nl = {
   "scoreboard.empty": "Nog geen tostis gegeten — aan de bak!",
   "config.button": "Instellen",
   "config.title": "IJzer instellen",
+  "config.ads": "Nep-advertenties",
+  "config.adsHint":
+    "Toon een nep-advertentie voordat een tosti van het ijzer mag. Ook te schakelen via ?ads=off in de adresbalk.",
+  "config.adsOn": "Aan",
+  "config.adsOff": "Uit",
   "config.slots": "Hoeveel tostis passen er op het ijzer?",
   "config.slotsHint":
     "Tostis die niet meer passen gaan terug naar de wachtrij.",
@@ -171,6 +176,11 @@ const en: Record<TranslationKey, string> = {
   "scoreboard.empty": "No toasties eaten yet — get grilling!",
   "config.button": "Set up",
   "config.title": "Iron setup",
+  "config.ads": "Fake ad breaks",
+  "config.adsHint":
+    "Show a fake ad before a toastie can leave the iron. Can also be toggled with ?ads=off in the address bar.",
+  "config.adsOn": "On",
+  "config.adsOff": "Off",
   "config.slots": "How many toasties fit on the iron?",
   "config.slotsHint": "Toasties that no longer fit go back to the queue.",
   "modal.close": "Close",

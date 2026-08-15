@@ -68,7 +68,8 @@ export function ToastieFacts() {
     onCleanup(() => window.clearTimeout(timer));
   });
 
-  const factIndex = () => hash(`${dateKey()}:fact`) % TOASTIE_FACTS.en.length;
+  const factIndex = () =>
+    hash(`${dateKey()}:fact`) % TOASTIE_FACTS[lang()].length;
   const face = () => FACT_FACES[hash(`${dateKey()}:face`) % FACT_FACES.length];
   const copy = () => LABELS[lang()];
 
