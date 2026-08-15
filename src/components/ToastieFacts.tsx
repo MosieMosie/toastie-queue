@@ -1,40 +1,10 @@
 import {createSignal, onCleanup, onMount} from "solid-js";
 
+import {TOASTIE_FACTS} from "../content/toastieFacts";
 import {lang} from "../store/i18n";
 
 import {FaceKind} from "./toastie/faces";
 import {ToastieSvg} from "./toastie/ToastieSvg";
-
-const FACTS = {
-  en: [
-    "Grated cheese melts more evenly because the smaller pieces have more surface area.",
-    "That golden-brown crunch comes from the Maillard reaction between heat, sugars and proteins.",
-    "Letting a toastie rest for one minute helps the cheese settle before the first bite.",
-    "A preheated iron crisps the bread quickly, before the middle has time to dry out.",
-    "Steam softens toast, so leave a finished toastie uncovered if you want it to stay crisp.",
-    "A thin, even layer of butter helps the whole surface brown instead of only a few patches.",
-    "Cheese melts from the outside in, which is why thin slices beat one big chunk.",
-    "Pickles taste great in a toastie because their acidity balances the richness of melted cheese.",
-    "Cutting a toastie diagonally exposes more of its glorious melted-cheese cross-section.",
-    "Mixing a bold cheese with a mild melty one gives you both flavour and a better cheese pull.",
-    "Bread stays crispest when the filling is not too wet and reaches right to the edges.",
-    "The smell of a hot toastie travels easily because warmth releases more aroma molecules.",
-  ],
-  nl: [
-    "Geraspte kaas smelt gelijkmatiger doordat de kleine stukjes samen meer oppervlak hebben.",
-    "Dat goudbruine korstje ontstaat door de Maillardreactie tussen hitte, suikers en eiwitten.",
-    "Laat een tosti een minuut rusten, dan kan de kaas even tot bedaren komen voor de eerste hap.",
-    "Een voorverwarmd ijzer maakt het brood snel krokant voordat de binnenkant uitdroogt.",
-    "Stoom maakt toast zacht, dus laat een verse tosti onbedekt als hij krokant moet blijven.",
-    "Een dun, gelijkmatig laagje boter laat de hele buitenkant bruinen in plaats van losse plekjes.",
-    "Kaas smelt van buiten naar binnen; dunne plakjes werken daarom beter dan een groot blok.",
-    "Augurk past goed in een tosti omdat het zuur de volle smaak van gesmolten kaas in balans brengt.",
-    "Een diagonale snede laat extra veel van die glorieuze gesmolten-kaasdoorsnede zien.",
-    "Combineer een pittige kaas met een milde smeltkaas voor veel smaak en een betere cheese pull.",
-    "Brood blijft het krokantst als de vulling niet te nat is en netjes tot aan de randen komt.",
-    "De geur van een hete tosti verspreidt zich snel doordat warmte meer aromamoleculen vrijlaat.",
-  ],
-} as const;
 
 const FACT_FACES: readonly FaceKind[] = [
   "happy",
@@ -98,7 +68,7 @@ export function ToastieFacts() {
     onCleanup(() => window.clearTimeout(timer));
   });
 
-  const factIndex = () => hash(`${dateKey()}:fact`) % FACTS.en.length;
+  const factIndex = () => hash(`${dateKey()}:fact`) % TOASTIE_FACTS.en.length;
   const face = () => FACT_FACES[hash(`${dateKey()}:face`) % FACT_FACES.length];
   const copy = () => LABELS[lang()];
 
@@ -129,7 +99,7 @@ export function ToastieFacts() {
           </span>
         </div>
         <p class="mt-0.5 text-xs leading-snug font-semibold text-amber-950/80 sm:text-[13px]">
-          {FACTS[lang()][factIndex()]}
+          {TOASTIE_FACTS[lang()][factIndex()]}
         </p>
       </div>
     </section>

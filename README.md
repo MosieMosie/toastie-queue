@@ -36,8 +36,8 @@ keyboard on touch-only devices. Fits 1280x720 without scrolling.
   (`MIN`/`MAX`/`DEFAULT_IRON_SLOTS`) and `NAME_MAX`: `shared/state.ts`
 - `PALETTE`: `src/store/toastie.ts`
 - faces and the toastie drawing: `src/components/toastie/faces.tsx`, `ToastieSvg.tsx`
-- daily facts and fake ad copy: `src/components/ToastieFacts.tsx`,
-  `src/components/modals/AdBreak.tsx`
+- daily facts: `src/content/toastieFacts.ts`
+- fake ad copy: `src/components/modals/AdBreak.tsx`
 
 ## Deploy
 
