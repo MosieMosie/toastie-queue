@@ -5,7 +5,7 @@ import {t} from "../../store/i18n";
 import {ironSlots, state} from "../../store/store";
 
 import {GrillingToastie} from "./GrillingToastie";
-import {tallSlot, wideSlot} from "./ironLayout";
+import {lastColumnSlot, tallSlot, wideSlot} from "./ironLayout";
 
 function EmptySlot(props: {slot: number}) {
   return (
@@ -28,6 +28,7 @@ export function IronSlot(props: {slot: number}) {
       class="grill-ridges relative flex min-h-(--slot-min) items-center justify-center rounded-2xl shadow-[inset_0_2px_10px_rgba(0,0,0,0.55)] transition duration-150"
       classList={{
         "sm:row-span-2": tallSlot(props.slot, ironSlots()),
+        "sm:col-[-2] sm:row-start-1": lastColumnSlot(props.slot, ironSlots()),
         "max-sm:col-span-2": wideSlot(props.slot, ironSlots()),
         "ring-2 ring-amber-300/40": Boolean(toastie()) && !zone.over(),
         "ring-1 ring-amber-200/20": !toastie() && !zone.active(),

@@ -3,7 +3,7 @@ import {For} from "solid-js";
 import {t} from "../../store/i18n";
 import {ironCount, ironSlots} from "../../store/store";
 
-import {slotIndexes} from "./ironLayout";
+import {ironColsClass, slotIndexes} from "./ironLayout";
 import {IronSlot} from "./IronSlot";
 
 function IronHood() {
@@ -22,7 +22,9 @@ function IronHood() {
 function GrillPlate() {
   return (
     <div class="rounded-2xl bg-[#241a14] p-2.5 shadow-[inset_0_4px_16px_rgba(0,0,0,0.7)]">
-      <div class="grid grid-cols-2 gap-2.5 [--slot-min:11rem] sm:grid-flow-col sm:grid-cols-none sm:auto-cols-fr sm:grid-rows-[repeat(2,minmax(var(--slot-min),1fr))] sm:[--slot-min:13.5rem]">
+      <div
+        class={`grid grid-cols-2 gap-2.5 [--slot-min:11rem] sm:grid-rows-[repeat(2,minmax(var(--slot-min),1fr))] sm:[--slot-min:13.5rem] ${ironColsClass(ironSlots())}`}
+      >
         <For each={slotIndexes(ironSlots())}>
           {(slot) => <IronSlot slot={slot} />}
         </For>
