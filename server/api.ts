@@ -10,6 +10,7 @@ import {
   DEFAULT_GRILL_SECONDS,
   NAME_MAX,
   type Person,
+  removePersonFromState,
   renamePersonInState,
   sanitizeState,
 } from "../shared/state.ts";
@@ -146,7 +147,7 @@ const patchPerson: Handler = async ({req, res, param}) => {
 
   db.updatePerson(param, person);
   if (person.name !== param) {
-    // toasties on the iron and the eaten tally are keyed by name
+    // active toasties, the eaten tally and grill stats are keyed by name
     const state = db.loadState();
     renamePersonInState(state, param, person.name);
     const rev = db.saveState(state);
@@ -159,6 +160,12 @@ const patchPerson: Handler = async ({req, res, param}) => {
 
 const deletePerson: Handler = ({res, param}) => {
   db.deletePerson(param);
+
+  const state = db.loadState();
+  removePersonFromState(state, param);
+  db.saveState(state);
+  publish("state", state);
+
   publish("people", db.listPeople());
   ok(res);
 };
