@@ -10,8 +10,12 @@ so every device sees the same queue AND NOBODY CAN SAY THEY DIDNT SEE IT WAS MY 
 ## How it works
 
 State lives on the server in one SQLite file. Clients load it with `GET /api/sync`,
-push changes with `PUT /api/state` and get everyone else's over SSE (`GET /api/events`).
-No accounts, last writer wins. In dev the API runs as Vite middleware; in production
+push changes with `PUT /api/state` and get every write back over SSE (`GET /api/events`).
+No accounts, last writer wins: the server stamps each write with a revision and
+broadcasts it to everyone, and clients drop anything at or below the revision they
+already hold, so concurrent writers converge on the same state. A client that hears
+nothing for a minute (the server pings every 25s) assumes its stream died silently
+and reconnects. In dev the API runs as Vite middleware; in production
 `server/index.ts` serves `dist/` plus the API. Node 24+, zero runtime dependencies.
 
 Names, colors and per-person eaten counts are managed in the app (Edit and Scoreboard

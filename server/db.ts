@@ -16,6 +16,7 @@ import {
 import {migrate} from "./migrations.ts";
 
 const STATE_KEY = "state-v1";
+const REV_KEY = "state-rev-v1";
 
 const dataDir =
   process.env.TOASTIE_DATA_DIR ?? path.join(process.cwd(), "data");
@@ -54,6 +55,12 @@ const stmt = {
   ),
 };
 
+// Seed the revision counter with the clock, so a wiped or replaced database
+// starts above any revision a long-running client may still hold.
+if (!stmt.getState.get(REV_KEY)) {
+  stmt.saveState.run(REV_KEY, String(Date.now()));
+}
+
 export const listPeople = (): Person[] =>
   stmt.listPeople.all() as unknown as Person[];
 
@@ -84,6 +91,22 @@ export function loadState(): State {
   }
 }
 
-export const saveState = (state: State) => {
-  stmt.saveState.run(STATE_KEY, JSON.stringify(state));
-};
+export function loadRev(): number {
+  const row = stmt.getState.get(REV_KEY) as {value: string} | undefined;
+  return row ? Number(row.value) : 0;
+}
+
+/** every write gets the next revision; returns it for the SSE broadcast */
+export function saveState(state: State): number {
+  const rev = loadRev() + 1;
+  db.exec("BEGIN");
+  try {
+    stmt.saveState.run(STATE_KEY, JSON.stringify(state));
+    stmt.saveState.run(REV_KEY, String(rev));
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+  return rev;
+}

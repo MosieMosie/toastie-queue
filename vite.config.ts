@@ -23,6 +23,7 @@ export default defineConfig({
     port: 3000,
     // listen on every interface so phones and tablets on the same wifi can reach it
     host: true,
+    allowedHosts: ["arch.local", "tosti.local"],
   },
   build: {
     target: "esnext",

@@ -1,8 +1,10 @@
 /**
  * The queue every screen shares. Actions mutate the local store first so that
  * dragging stays instant, then push the whole state to the server, which
- * broadcasts it over SSE to the other screens. Our own clientId travels with
- * the request so the server can leave us out of that broadcast.
+ * stamps a revision and broadcasts it over SSE to every screen, sender
+ * included. Revisions order the writes: anything at or below what a screen
+ * already holds is old news, so concurrent writers all converge on whichever
+ * write the server accepted last.
  */
 import {createSignal} from "solid-js";
 import {createStore, produce, reconcile} from "solid-js/store";
@@ -26,40 +28,113 @@ const sanitize = (value: unknown): State =>
 
 export const [state, setState] = createStore<State>(emptyState());
 
-// not crypto.randomUUID: that needs a secure context, and the kiosk is on http://<ip>
-const clientId = Math.random().toString(36).slice(2) + Date.now().toString(36);
+let lastRev = 0;
+// While our own save is in flight, the local state is the newest intent there
+// is: applying a remote update over it would flash the previous state onto the
+// screen. Updates wait, and the newest one lands once the saves settle — by
+// then our own revision is usually the higher one and it simply drops.
+let pendingSaves = 0;
+let deferred: {rev: number; state: unknown} | null = null;
+
+function applyRemote(rev: number, value: unknown) {
+  if (rev <= lastRev) {
+    return;
+  }
+  if (pendingSaves > 0) {
+    if (!deferred || rev > deferred.rev) {
+      deferred = {rev, state: value};
+    }
+    return;
+  }
+  lastRev = rev;
+  setState(reconcile(sanitize(value)));
+}
 
 function save() {
+  pendingSaves++;
   fetch("/api/state", {
     method: "PUT",
-    headers: {"content-type": "application/json", "x-client-id": clientId},
+    headers: {"content-type": "application/json"},
     body: JSON.stringify(state),
-  }).catch(() => {
-    // offline: the next action resends the full state anyway
-  });
+  })
+    .then(async (res) => {
+      const {rev} = (await res.json()) as {rev?: number};
+      // our own echo comes back over SSE with this same revision and drops
+      if (typeof rev === "number" && rev > lastRev) {
+        lastRev = rev;
+      }
+    })
+    .catch(() => {
+      // offline: the next action resends the full state anyway
+    })
+    .finally(() => {
+      pendingSaves--;
+      if (pendingSaves === 0 && deferred) {
+        const next = deferred;
+        deferred = null;
+        applyRemote(next.rev, next.state);
+      }
+    });
 }
 
 async function syncFromServer() {
   try {
     const res = await fetch("/api/sync");
-    const data = (await res.json()) as {people: Person[]; state: unknown};
+    const data = (await res.json()) as {
+      people: Person[];
+      state: unknown;
+      rev: number;
+    };
     setPeople(data.people);
-    setState(reconcile(sanitize(data.state)));
+    applyRemote(data.rev, data.state);
   } catch {
-    // server unreachable; the EventSource keeps retrying
+    // server unreachable; the reconnecting EventSource keeps trying
   }
 }
 
-const events = new EventSource(`/api/events?client=${clientId}`);
-// on every (re)connect: a dropped connection may have missed updates
-events.onopen = () => {
-  syncFromServer();
-};
-events.addEventListener("state", (e) => {
-  setState(reconcile(sanitize(JSON.parse(e.data))));
-});
-events.addEventListener("people", (e) => {
-  setPeople(JSON.parse(e.data) as Person[]);
+// The browser reconnects an EventSource only after an error it can see. A
+// connection that dies silently (wifi drop, sleeping phone) stays "open"
+// forever and just goes quiet, so we watch for silence ourselves: the server
+// pings every 25s, and a minute without any event means the stream is dead.
+const STALE_MS = 60_000;
+let lastHeard = Date.now();
+let events: EventSource;
+
+function connect() {
+  events = new EventSource("/api/events");
+  // on every (re)connect: a dropped connection may have missed updates
+  events.onopen = () => {
+    lastHeard = Date.now();
+    syncFromServer();
+  };
+  events.addEventListener("ping", () => {
+    lastHeard = Date.now();
+  });
+  events.addEventListener("state", (e) => {
+    lastHeard = Date.now();
+    const update = JSON.parse(e.data) as {rev: number; state: unknown};
+    applyRemote(update.rev, update.state);
+  });
+  events.addEventListener("people", (e) => {
+    lastHeard = Date.now();
+    setPeople(JSON.parse(e.data) as Person[]);
+  });
+}
+connect();
+
+setInterval(() => {
+  if (Date.now() - lastHeard > STALE_MS) {
+    lastHeard = Date.now();
+    events.close();
+    connect();
+  }
+}, 10_000);
+
+// a phone waking from its pocket should not wait out the silence watchdog
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    syncFromServer();
+  }
 });
 
 const PERSON_ERRORS = [

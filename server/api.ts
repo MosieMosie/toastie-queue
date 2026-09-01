@@ -97,10 +97,14 @@ interface Request {
 type Handler = (request: Request) => Promise<void> | void;
 
 const getSync: Handler = ({res}) =>
-  json(res, 200, {people: db.listPeople(), state: db.loadState()});
+  json(res, 200, {
+    people: db.listPeople(),
+    state: db.loadState(),
+    rev: db.loadRev(),
+  });
 
-const getEvents: Handler = ({req, res, url}) => {
-  const unsubscribe = subscribe(url.searchParams.get("client") ?? "", res);
+const getEvents: Handler = ({req, res}) => {
+  const unsubscribe = subscribe(res);
   req.on("close", unsubscribe);
 };
 
@@ -110,10 +114,10 @@ const putState: Handler = async ({req, res}) => {
     return fail(res, "invalid-state");
   }
 
-  db.saveState(state);
-  // the sender already has this state applied locally
-  publish("state", state, req.headers["x-client-id"] as string | undefined);
-  ok(res);
+  const rev = db.saveState(state);
+  publish("state", {rev, state});
+  // the sender needs its revision even when its event stream is down
+  json(res, 200, {ok: true, rev});
 };
 
 const postPerson: Handler = async ({req, res}) => {
@@ -145,8 +149,8 @@ const patchPerson: Handler = async ({req, res, param}) => {
     // toasties on the iron and the eaten tally are keyed by name
     const state = db.loadState();
     renamePersonInState(state, param, person.name);
-    db.saveState(state);
-    publish("state", state);
+    const rev = db.saveState(state);
+    publish("state", {rev, state});
   }
 
   publish("people", db.listPeople());
